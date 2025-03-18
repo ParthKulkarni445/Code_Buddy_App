@@ -230,10 +230,10 @@ class _SubmissionsPageState extends State<SubmissionsPage> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: isAccepted ? Colors.green[50] : Colors.red[50],
+          color: isAccepted ? Colors.green[50] : ((submission['verdict']==null)?Colors.orange[50]:Colors.red[50]),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isAccepted ? Colors.green[200]! : Colors.red[200]!,
+            color: isAccepted ? Colors.green[200]! : ((submission['verdict']==null)?Colors.orange[200]!:Colors.red[200]!),
             width: 1.5,
           ),
         ),
@@ -309,8 +309,8 @@ class _SubmissionsPageState extends State<SubmissionsPage> {
                   _buildInfoRow(
                     Icons.check_circle_outline,
                     'Verdict:',
-                    submission['verdict'],
-                    isAccepted ? Colors.green[700]! : Colors.red[700]!,
+                    submission['verdict']??"SYSTEM_TESTING",
+                    isAccepted ? Colors.green[700]! : ((submission['verdict']==null)?Colors.orange:Colors.red[700]!),
                   ),
                   const SizedBox(height: 8),
                   _buildInfoRow(

@@ -8,7 +8,6 @@ import 'package:acex/utils/constant.dart';
 import 'package:acex/utils/secure_storage.dart';
 import 'package:acex/utils/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
 import 'package:provider/provider.dart';
@@ -65,7 +64,7 @@ class AuthService{
         },
       );
     } catch (e) {
-      showAlert(context, "Some error occured, please try again later.");
+      showAlert(context, e.toString());
     }
   }
 
@@ -118,11 +117,7 @@ class AuthService{
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('x-auth-token');
 
-      if(token==null)
-      {
-        print('Token is null');
-        prefs.setString('x-auth-token', '');
-      }
+      if(token==null)prefs.setString('x-auth-token', '');
       
       var tokenRes = await http.post(
         Uri.parse('${Constants.uri}/tokenIsValid'),

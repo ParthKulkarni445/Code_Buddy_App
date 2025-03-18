@@ -171,8 +171,8 @@ class _StatsPageState extends State<StatsPage> {
       if (submission['problem']['tags'] != null) {
         List<dynamic> tags = submission['problem']['tags'];
         String problemId = '${submission['problem']['contestId']}-${submission['problem']['index']}';
-        String verdict = submission['verdict'];
-
+        String? verdict = submission['verdict'];
+        if(verdict == null) continue;
         for (var tag in tags) {
           if (verdict == 'OK') {
             if (!solvedByTag.containsKey(tag)) {
@@ -748,6 +748,7 @@ class _StatsPageState extends State<StatsPage> {
       int total = submissions.length;
 
       for (var submission in submissions) {
+        if(submission['verdict']==null) continue;
         String verdict = submission['verdict'];
         if (verdict == 'OK') {
           verdictCounts['Accepted'] = verdictCounts['Accepted']! + 1;
