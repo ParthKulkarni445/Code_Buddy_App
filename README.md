@@ -30,6 +30,6 @@ One of the biggest challenges was fetching all friends' handles together, as Cod
 Currently, profiles load individually, but I’m actively working on optimizing this!  
 
 ## 💻 Check it out on GitHub  
-🔗 [GitHub Repository](https://github.com/ParthKulkarni445/AceX)  
+🔗 [GitHub Repository]((https://github.com/ParthKulkarni445/Code_Buddy_App))  
 
 Would love to hear your thoughts! Any feedback or suggestions are welcome. 🔥  
