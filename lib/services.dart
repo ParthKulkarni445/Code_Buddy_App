@@ -118,6 +118,7 @@ class AuthService{
       String? token = prefs.getString('x-auth-token');
 
       if(token==null)prefs.setString('x-auth-token', '');
+      print(Uri.parse('${Constants.uri}/tokenIsValid'));
       
       var tokenRes = await http.post(
         Uri.parse('${Constants.uri}/tokenIsValid'),
@@ -126,7 +127,8 @@ class AuthService{
           'x-auth-token': token!,
         },
       );
-
+      print("hi");
+      print(tokenRes.body);
       var response = jsonDecode(tokenRes.body);
 
       if (response == true) {
