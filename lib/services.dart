@@ -76,6 +76,7 @@ class AuthService{
     try {
       var userProvider = Provider.of<UserProvider>(context, listen: false);
       final navigator = Navigator.of(context);
+
       http.Response res = await http.post(
         Uri.parse('${Constants.uri}/api/signin'),
         body: jsonEncode({
@@ -86,6 +87,7 @@ class AuthService{
           'Content-Type': 'application/json; charset=UTF-8',
         },
       );
+      print(res.body);
       httpErrorHandle(
         response: res,
         context: context,
@@ -93,8 +95,6 @@ class AuthService{
           SharedPreferences prefs = await SharedPreferences.getInstance();
           userProvider.setUser(res.body);
           print('This is the token: ${jsonDecode(res.body)['token']}');
-          // try{await prefs.setString('x-auth-token', jsonDecode(res.body)['token']);}
-          // catch(e){print(e);}
           await prefs.setString('x-auth-token', jsonDecode(res.body)['token']);
           navigator.pushAndRemoveUntil(
             MaterialPageRoute(
