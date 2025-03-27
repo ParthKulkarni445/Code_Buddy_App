@@ -1,3 +1,4 @@
+import 'package:acex/problemset.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -24,7 +25,8 @@ class _LandingPageState extends State<LandingPage> {
     Colors.yellow[600],
     Colors.blue,
     Colors.green,
-    Colors.purple
+    Colors.purple,
+    Colors.teal
   ];
 
   void onPageChange(int page) {
@@ -45,7 +47,8 @@ class _LandingPageState extends State<LandingPage> {
       const ContestsPage(),
       const FriendsPage(),
       SubmissionsPage(handle: handle),
-      StatsPage(handle: handle)
+      StatsPage(handle: handle),
+      ProblemPage(handle: handle),
     ];
   }
 
@@ -95,6 +98,7 @@ class _LandingPageState extends State<LandingPage> {
                       _buildNavBarItem(FontAwesomeIcons.users, 2),
                       _buildNavBarItem(FontAwesomeIcons.clipboardList, 3),
                       _buildNavBarItem(FontAwesomeIcons.magnifyingGlassChart, 4),
+                      _buildNavBarItem(FontAwesomeIcons.book, 5),
                     ],
                   ),
                 ),

@@ -1,9 +1,11 @@
+import 'package:acex/providers/user_provider.dart';
 import 'package:acex/services.dart';
 import 'package:acex/utils/loading_widget.dart';
 import 'package:acex/utils/rating_calculator.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ContestDetailsPage extends StatefulWidget {
@@ -20,7 +22,7 @@ class _ContestDetailsPageState extends State<ContestDetailsPage> {
   late Future<Map<String, dynamic>> userStandings;
   late Future<List<dynamic>> contestRatingChanges;
   late Future<Map<String,dynamic>> friends;
-  final String _handle = 'IamAddictedtoCP';
+  late String _handle;
 
    Color getColorForRating(int? rating) {
     if (rating == null || rating <= 1199) return Colors.grey;
@@ -39,6 +41,8 @@ class _ContestDetailsPageState extends State<ContestDetailsPage> {
   @override
   void initState() {
     super.initState();
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    _handle = user.handle;
     _fetchData();
   }
 
@@ -1166,7 +1170,7 @@ Widget _buildErrorState() {
             onPressed: _retryFetchData,
             style: ElevatedButton.styleFrom(
               elevation: 6,
-              backgroundColor: Colors.yellow[600],
+              backgroundColor: Colors.orange,
             ),
             child: const Text('Retry', style: TextStyle(color: Colors.black),),
           ),

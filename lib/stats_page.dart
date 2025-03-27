@@ -86,7 +86,7 @@ class _StatsPageState extends State<StatsPage> {
 
   void _fetchData() {
     submissions = ApiService().getSubmissions(widget.handle);
-    problems = ApiService().getProlblemSet();
+    problems = ApiService().getProblemset();
     contests = ApiService().getContests();
   }
 

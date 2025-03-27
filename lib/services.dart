@@ -291,7 +291,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String,dynamic>> getProlblemSet() async {
+  Future<Map<String,dynamic>> getProblemset() async {
     final response = await http.get(Uri.parse('https://codeforces.com/api/problemset.problems'));
 
     if (response.statusCode == 200) {
@@ -372,6 +372,7 @@ Future<Map<String,dynamic>> getFriendStandings(String handle, int contestId) asy
       '$baseUrl$methodName?$paramString&apiSig=$apiSig'
     );
     final response = await http.get(url);
+    print(response.body);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       if (data['status'] == 'OK') {

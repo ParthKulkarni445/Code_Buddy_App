@@ -29,7 +29,7 @@ class _SubmissionsPageState extends State<SubmissionsPage> {
 
   void _fetchData() {
     submissions = ApiService().getSubmissions(widget.handle);
-    problems = ApiService().getProlblemSet();
+    problems = ApiService().getProblemset();
   }
 
   void _retryFetchData() {
