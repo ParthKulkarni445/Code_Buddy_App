@@ -71,8 +71,8 @@ class _FriendsPageState extends State<FriendsPage> {
   }
 
   void _fetchData() {
-    friends = ApiService().fetchFriends(_handle, false);
-    onlineFriends = ApiService().fetchFriends(_handle, true);
+    friends = ApiService().fetchFriendsInfo(_handle, false);
+    onlineFriends = ApiService().fetchFriendsInfo(_handle, true);
   }
 
   void _retryFetchData() {
@@ -344,9 +344,10 @@ class _FriendsPageState extends State<FriendsPage> {
 
           final onlineFriendsList = snapshot.data![0];
           final allFriendsList = snapshot.data![1];
+          onlineFriendsList.sort((a, b) => (b['rating'] ?? 0).compareTo(a['rating'] ?? 0));
+          allFriendsList.sort((a, b) => (b['rating'] ?? 0).compareTo(a['rating'] ?? 0));
           final offlineFriendsList = allFriendsList
-              .where((friend) => !onlineFriendsList.contains(friend))
-              .toList();
+              .where((friend) => !onlineFriendsList.any((online) => online['handle'] == friend['handle'])).toList();
 
           return RefreshIndicator(
             color: Colors.black,
@@ -362,11 +363,11 @@ class _FriendsPageState extends State<FriendsPage> {
                   builder: (context, searchQuery, child) {
                     final filteredOnlineFriends = onlineFriendsList
                         .where((friend) =>
-                            friend.toString().toLowerCase().contains(searchQuery))
+                            friend['handle'].toString().toLowerCase().contains(searchQuery))
                         .toList();
                     final filteredOfflineFriends = offlineFriendsList
                         .where((friend) =>
-                            friend.toString().toLowerCase().contains(searchQuery))
+                            friend['handle'].toString().toLowerCase().contains(searchQuery))
                         .toList();
 
                     if (onlineFriendsList.isEmpty && allFriendsList.isEmpty) {
@@ -535,120 +536,159 @@ class _FriendsPageState extends State<FriendsPage> {
     );
   }
 
-  Widget _buildFriendCard(dynamic friend, bool isOnline) {
-    final handle = friend;
-    final colorIndex = handle.hashCode % avatarColors.length;
-    final avatarColor = avatarColors[colorIndex];
-
-    return Card(
-      elevation: 7,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
+  Widget _buildFriendCard(Map<String, dynamic> friend, bool isOnline) {
+  final handle = friend['handle'] as String;
+  final titlePhoto = friend['titlePhoto'] as String?;
+  final rating = friend['rating'] as int?;
+  final ratingColor = getColorForRating(rating);
+  
+  return Card(
+    elevation: 7,
+    margin: const EdgeInsets.symmetric(vertical: 8),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Container(
+      decoration: BoxDecoration(
+        color: (isOnline) ? Colors.green[50] : Colors.white,
         borderRadius: BorderRadius.circular(12),
+        border: isOnline
+            ? Border.all(
+                color: Colors.green[400]!,
+                width: 1.5,
+              )
+            : null,
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: (isOnline) ? Colors.green.withOpacity(0.25) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: isOnline
-              ? Border.all(
-                  color: Colors.green[400]!,
-                  width: 1.5,
-                )
-              : null,
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            FocusManager.instance.primaryFocus?.unfocus();
-            
-            Future.delayed(const Duration(milliseconds: 100), () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => FriendLandingPage(handle: handle),
-                ),
-              );
-            });
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+          
+          Future.delayed(const Duration(milliseconds: 100), () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FriendLandingPage(handle: handle),
+              ),
+            );
+          });
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // User avatar or title photo
+              titlePhoto != null && titlePhoto.isNotEmpty
+                ? ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    color: avatarColor,
-                    boxShadow: [
-                      BoxShadow(
-                        color: avatarColor.withOpacity(0.5),
-                        blurRadius: isOnline ? 8 : 4,
-                        spreadRadius: isOnline ? 1 : 0,
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      (handle.length > 2)
-                          ? handle.substring(0, 2).toUpperCase()
-                          : handle.toUpperCase(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 2,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
+                    child: Image.network(
+                      titlePhoto,
+                      width: 55,
+                      height: 55,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Fallback to initials if image fails to load
+                        return _buildInitialsAvatar(handle);
+                      },
                     ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Column(
+                  )
+                : _buildInitialsAvatar(handle),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       handle,
-                      style: const TextStyle(
-                        color: Colors.black,
+                      style: TextStyle(
+                        color: ratingColor,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    (isOnline)
-                        ? Text(
-                            'Online',
+                    if (rating != null)
+                      Row(
+                        children: [
+                          Text(
+                            'Rating:',
                             style: TextStyle(
-                              color: Colors.green[400],
+                              color: Colors.grey[600],
                               fontSize: 14,
-                              fontWeight: FontWeight.bold,
                             ),
-                          )
-                        : const Text(
-                            'Offline',
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            rating.toString(),
                             style: TextStyle(
-                              color: Colors.grey,
+                              color: Colors.black,
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                        ],
+                      ),
+                    if(isOnline)
+                            Text(
+                                'Online',
+                                style: TextStyle(
+                                  color: Colors.green[400],
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            
                   ],
                 ),
-                const Spacer(),
-                const Icon(Icons.chevron_right, color: Colors.grey, size: 30),
-              ],
-            ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.grey, size: 30),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+// Helper method to build initials avatar
+Widget _buildInitialsAvatar(String handle) {
+  final colorIndex = handle.hashCode % avatarColors.length;
+  final avatarColor = avatarColors[colorIndex];
+  
+  return Container(
+    width: 48,
+    height: 48,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      color: avatarColor,
+      boxShadow: [
+        BoxShadow(
+          color: avatarColor.withOpacity(0.5),
+          blurRadius: 4,
+          spreadRadius: 0,
+        ),
+      ],
+    ),
+    child: Center(
+      child: Text(
+        (handle.length > 2)
+            ? handle.substring(0, 2).toUpperCase()
+            : handle.toUpperCase(),
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 }

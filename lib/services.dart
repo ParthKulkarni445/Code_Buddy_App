@@ -29,8 +29,7 @@ class ProblemDetails {
   });
 }
 
-class AuthService{
-
+class AuthService {
   void signUpUser({
     required BuildContext context,
     required String email,
@@ -117,9 +116,9 @@ class AuthService{
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('x-auth-token');
 
-      if(token==null)prefs.setString('x-auth-token', '');
+      if (token == null) prefs.setString('x-auth-token', '');
       print(Uri.parse('${Constants.uri}/tokenIsValid'));
-      
+
       var tokenRes = await http.post(
         Uri.parse('${Constants.uri}/tokenIsValid'),
         headers: <String, String>{
@@ -134,7 +133,10 @@ class AuthService{
       if (response == true) {
         http.Response userRes = await http.get(
           Uri.parse('${Constants.uri}/'),
-          headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8', 'x-auth-token': token},
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'x-auth-token': token
+          },
         );
 
         userProvider.setUser(userRes.body);
@@ -156,23 +158,89 @@ class AuthService{
       (route) => false,
     );
   }
+
+  Future<bool> sendVerificationCode({
+    required String email,
+    required BuildContext context,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Constants.uri}/api/forgot-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && (data['success'] ?? true)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Verification code sent to email')),
+        );
+        return true;
+      } else {
+        showAlert(context, data['msg'] ?? 'Failed to send verification code');
+        return false;
+      }
+    } catch (e) {
+      showAlert(context, 'An error occurred. Please try again.');
+      return false;
+    }
+  }
+
+  /// Resets password; returns true on success
+  Future<bool> resetPassword({
+    required String email,
+    required String verificationCode,
+    required String newPassword,
+    required BuildContext context,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Constants.uri}/api/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'verificationCode': verificationCode,
+          'newPassword': newPassword,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && (data['success'] ?? true)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password reset successfully')),
+        );
+        Navigator.of(context).pop();
+        return true;
+      } else {
+        showAlert(context, data['msg'] ?? 'Failed to reset password');
+        return false;
+      }
+    } catch (e) {
+      showAlert(context, 'An error occurred. Please try again.');
+      return false;
+    }
+  }
 }
 
 class ApiService {
-  final String baseUrl = 'https://codeforces.com/api/'; // Replace with your server's URL if deployed
+  final String baseUrl =
+      'https://codeforces.com/api/'; // Replace with your server's URL if deployed
 
   Future<ProblemDetails> getProblemDetails(int contestId, String index) async {
     final url = 'https://codeforces.com/problemset/problem/$contestId/$index';
-    
+
     // This would be your actual API endpoint that runs puppeteer
     // For now, returning mock data
     await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
-    
+
     return ProblemDetails(
       title: 'Nuetral Tonality',
-      statement: 'Given an array a of n positive integers. In one operation, you can pick any pair of indexes (i,j) such that ai and aj have distinct parity, then replace the smaller one with the sum of them. More formally: \n\nIf ai<aj, replace ai with ai+aj; \nOtherwise, replace aj with ai+aj. \n\nFind the minimum number of operations needed to make all elements of the array have the same parity.',
-      inputSpec: 'The first line contains two integers n and m (1 ≤ n, m ≤ 100) — the number of rows and columns in the matrix.',
-      outputSpec: 'Print "YES" (without quotes) if it is possible to make the matrix beautiful, or "NO" (without quotes) otherwise.',
+      statement:
+          'Given an array a of n positive integers. In one operation, you can pick any pair of indexes (i,j) such that ai and aj have distinct parity, then replace the smaller one with the sum of them. More formally: \n\nIf ai<aj, replace ai with ai+aj; \nOtherwise, replace aj with ai+aj. \n\nFind the minimum number of operations needed to make all elements of the array have the same parity.',
+      inputSpec:
+          'The first line contains two integers n and m (1 ≤ n, m ≤ 100) — the number of rows and columns in the matrix.',
+      outputSpec:
+          'Print "YES" (without quotes) if it is possible to make the matrix beautiful, or "NO" (without quotes) otherwise.',
       examples: [
         {
           'input': '3\n2 1 3',
@@ -187,7 +255,8 @@ class ApiService {
   }
 
   Future<List<dynamic>> getContests() async {
-    final response = await http.get(Uri.parse('https://codeforces.com/api/contest.list'));
+    final response =
+        await http.get(Uri.parse('https://codeforces.com/api/contest.list'));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       if (data['status'] == 'OK') {
@@ -201,7 +270,8 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getContestDetails(int contestId) async {
-    final response = await http.get(Uri.parse('https://codeforces.com/api/contest.standings?contestId=$contestId'));
+    final response = await http.get(Uri.parse(
+        'https://codeforces.com/api/contest.standings?contestId=$contestId'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -217,7 +287,8 @@ class ApiService {
 
   //getContestRatingChanges
   Future<List<dynamic>> getContestRatingChanges(int contestId) async {
-    final response = await http.get(Uri.parse('https://codeforces.com/api/contest.ratingChanges?contestId=$contestId'));
+    final response = await http.get(Uri.parse(
+        'https://codeforces.com/api/contest.ratingChanges?contestId=$contestId'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -231,8 +302,10 @@ class ApiService {
     }
   }
 
-  Future<Map<String,dynamic>> getUserStandings(int contestId, String handle) async {
-    final response = await http.get(Uri.parse('https://codeforces.com/api/contest.standings?contestId=$contestId&handles=$handle'));
+  Future<Map<String, dynamic>> getUserStandings(
+      int contestId, String handle) async {
+    final response = await http.get(Uri.parse(
+        'https://codeforces.com/api/contest.standings?contestId=$contestId&handles=$handle'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -247,7 +320,8 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getUserInfo(String handle) async {
-    final response = await http.get(Uri.parse('https://codeforces.com/api/user.info?handles=$handle'));
+    final response = await http
+        .get(Uri.parse('https://codeforces.com/api/user.info?handles=$handle'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -262,7 +336,8 @@ class ApiService {
   }
 
   Future<List<dynamic>> getRatingHistory(String handle) async {
-    final response = await http.get(Uri.parse('https://codeforces.com/api/user.rating?handle=$handle'));
+    final response = await http.get(
+        Uri.parse('https://codeforces.com/api/user.rating?handle=$handle'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -277,7 +352,8 @@ class ApiService {
   }
 
   Future<List<dynamic>> getSubmissions(String handle) async {
-    final response = await http.get(Uri.parse('https://codeforces.com/api/user.status?handle=$handle'));
+    final response = await http.get(
+        Uri.parse('https://codeforces.com/api/user.status?handle=$handle'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -291,8 +367,9 @@ class ApiService {
     }
   }
 
-  Future<Map<String,dynamic>> getProblemset() async {
-    final response = await http.get(Uri.parse('https://codeforces.com/api/problemset.problems'));
+  Future<Map<String, dynamic>> getProblemset() async {
+    final response = await http
+        .get(Uri.parse('https://codeforces.com/api/problemset.problems'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -306,42 +383,35 @@ class ApiService {
     }
   }
 
-  String _generateApiSig(int time, String methodName, String paramString, String? apiSecret) {
-  // Create random string of 6 characters
-  final rand = Random().nextInt(900000) + 100000; // Generates a number between 100000 and 999999
-  
-  // Format: rand/methodName?param1=value1&param2=value2#apiSecret
-  final strToHash = '$rand/$methodName?$paramString#$apiSecret';
-  
-  // Generate SHA512 hash
-  final bytes = utf8.encode(strToHash);
-  final hash = sha512.convert(bytes);
-  
-  return '$rand${hash.toString()}';
-}
+  String _generateApiSig(
+      int time, String methodName, String paramString, String? apiSecret) {
+    // Create random string of 6 characters
+    final rand = Random().nextInt(900000) +
+        100000; // Generates a number between 100000 and 999999
 
-Future<Map<String,dynamic>> getFriendStandings(String handle, int contestId) async {
-  String? apiKey = await SecureStorageService.readData('api_key');
-  String? apiSecret = await SecureStorageService.readData('api_secret');
+    // Format: rand/methodName?param1=value1&param2=value2#apiSecret
+    final strToHash = '$rand/$methodName?$paramString#$apiSecret';
+
+    // Generate SHA512 hash
+    final bytes = utf8.encode(strToHash);
+    final hash = sha512.convert(bytes);
+
+    return '$rand${hash.toString()}';
+  }
+
+  Future<Map<String, dynamic>> getFriendStandings(
+      String handle, int contestId) async {
+    String? apiKey = await SecureStorageService.readData('api_key');
+    String? apiSecret = await SecureStorageService.readData('api_secret');
 
     const methodName = 'contest.standings';
     final time = (DateTime.now().millisecondsSinceEpoch / 1000).round();
-
-    // Fetch friends' handles
     final friendsInfo = await fetchFriends(handle, false);
-    print(friendsInfo);
     final friendsHandles = friendsInfo.join(';');
-
-    // Create parameter string
-    final paramString = 'apiKey=$apiKey&contestId=$contestId&handles=$handle;$friendsHandles&time=$time';
-
-    // Generate API signature
+    final paramString =
+        'apiKey=$apiKey&contestId=$contestId&handles=$handle;$friendsHandles&time=$time';
     final apiSig = _generateApiSig(time, methodName, paramString, apiSecret);
-    //print('$baseUrl$methodName?$paramString&apiSig=$apiSig');
-    // Construct full URL with authentication
-    final url = Uri.parse(
-      '$baseUrl$methodName?$paramString&apiSig=$apiSig'
-    );
+    final url = Uri.parse('$baseUrl$methodName?$paramString&apiSig=$apiSig');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -354,23 +424,21 @@ Future<Map<String,dynamic>> getFriendStandings(String handle, int contestId) asy
     } else {
       throw Exception('Failed to fetch standings');
     }
-}
+  }
 
- Future<List<dynamic>> fetchFriends(String handle, bool isOnline) async {
+  Future<List<dynamic>> fetchFriends(String handle, bool isOnline) async {
     String? apiKey = await SecureStorageService.readData('api_key');
     String? apiSecret = await SecureStorageService.readData('api_secret');
     const methodName = 'user.friends';
     final time = (DateTime.now().millisecondsSinceEpoch / 1000).round();
-    
+
     // Create parameter string
     final paramString = 'apiKey=$apiKey&onlyOnline=$isOnline&time=$time';
-    
+
     // Generate API signature
     final apiSig = _generateApiSig(time, methodName, paramString, apiSecret);
     // Construct full URL with authentication
-    final url = Uri.parse(
-      '$baseUrl$methodName?$paramString&apiSig=$apiSig'
-    );
+    final url = Uri.parse('$baseUrl$methodName?$paramString&apiSig=$apiSig');
     final response = await http.get(url);
     print(response.body);
     if (response.statusCode == 200) {
@@ -385,39 +453,21 @@ Future<Map<String,dynamic>> getFriendStandings(String handle, int contestId) asy
     }
   }
 
-Future<List<dynamic>> getFriendsList(String handle) async {
-  String? apiKey = await SecureStorageService.readData('api_key');
-  String? apiSecret = await SecureStorageService.readData('api_secret');
-  const methodName = 'user.friends';
-  final time = (DateTime.now().millisecondsSinceEpoch / 1000).round();
-  
-  // Create parameter string
-  final paramString = 'apiKey=$apiKey&time=$time';
-  
-  // Generate API signature
-  final apiSig = _generateApiSig(time, methodName, paramString, apiSecret);
-  
-  // Construct full URL with authentication
-  final url = Uri.parse(
-    '$baseUrl$methodName?$paramString&apiSig=$apiSig'
-  );
-  final response = await http.get(url);
-
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    if (data['status'] == 'OK') {
-      final friends = data['result'];
-      //print('Fetched friends for $handle, ${DateTime.now()}');
-      return friends;
+  Future<List<dynamic>> fetchFriendsInfo(String handle, bool isOnline) async {
+    final friendList = await fetchFriends(handle, isOnline);
+    String friends = friendList.join(';');
+    final response = await http.get(Uri.parse(
+        'https://codeforces.com/api/user.info?handles=$handle;$friends'));
+    //print(response.body);
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['status'] == 'OK') {
+        return data['result'];
+      } else {
+        throw Exception('Failed to fetch user info');
+      }
     } else {
-      throw Exception('Failed to fetch friends: ${data['comment'] ?? 'Unknown error'}');
+      throw Exception('Failed to fetch user info');
     }
-  } else {
-    throw Exception('Failed to fetch friends: HTTP ${response.statusCode}');
   }
 }
-
-
-
-}
-
