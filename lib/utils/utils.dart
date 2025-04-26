@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-void showAlert(BuildContext context, String text) {
+void showAlert(BuildContext context, String title, String text) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
         backgroundColor: Colors.white,
-        title: Text('Error', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: Text(title, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         content: Text(text, style: TextStyle(color: Colors.black)),
         actions: [
           TextButton(
@@ -33,12 +33,12 @@ void httpErrorHandle({
       onSuccess();
       break;
     case 400:
-      showAlert(context, " Bad request, please check you are connected to a network.");
+      showAlert(context, "Network Error", " Bad request, please check you are connected to a network.");
       break;
     case 500:
-      showAlert(context, "The server is currently down, please try again later.");
+      showAlert(context, "Server Down","The server is currently down, please try again later.");
       break;
     default:
-      showAlert(context, response.body);
+      showAlert(context, "Alert", response.body);
   }
 }

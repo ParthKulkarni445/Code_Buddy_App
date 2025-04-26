@@ -58,12 +58,13 @@ class AuthService {
         onSuccess: () {
           showAlert(
             context,
+            'Success',
             'Account created! Login with the same credentials!',
           );
         },
       );
     } catch (e) {
-      showAlert(context, e.toString());
+      showAlert(context,'Error', e.toString());
     }
   }
 
@@ -104,7 +105,7 @@ class AuthService {
         },
       );
     } catch (e) {
-      showAlert(context, "Some error occured, please try again later.");
+      showAlert(context,'Error', "Some error occured, please try again later.");
     }
   }
 
@@ -143,7 +144,7 @@ class AuthService {
       }
     } catch (e) {
       print(e);
-      showAlert(context, e.toString());
+      showAlert(context, 'Error', "Some error occured, please try again later.");
     }
   }
 
@@ -177,11 +178,11 @@ class AuthService {
         );
         return true;
       } else {
-        showAlert(context, data['msg'] ?? 'Failed to send verification code');
+        showAlert(context, 'Error',data['msg'] ?? 'Failed to send verification code');
         return false;
       }
     } catch (e) {
-      showAlert(context, 'An error occurred. Please try again.');
+      showAlert(context,'Error', 'An error occurred. Please try again.');
       return false;
     }
   }
@@ -212,11 +213,11 @@ class AuthService {
         Navigator.of(context).pop();
         return true;
       } else {
-        showAlert(context, data['msg'] ?? 'Failed to reset password');
+        showAlert(context,'Error', data['msg'] ?? 'Failed to reset password');
         return false;
       }
     } catch (e) {
-      showAlert(context, 'An error occurred. Please try again.');
+      showAlert(context, 'Error','An error occurred. Please try again.');
       return false;
     }
   }
