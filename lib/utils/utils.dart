@@ -1,23 +1,68 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 void showAlert(BuildContext context, String title, String text) {
   showDialog(
     context: context,
+    barrierColor: Colors.black54,
     builder: (BuildContext context) {
-      return AlertDialog(
-        backgroundColor: Colors.white,
-        title: Text(title, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        content: Text(text, style: TextStyle(color: Colors.black)),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            style: TextButton.styleFrom(backgroundColor: Colors.black),
-            child: Text('OK', style: TextStyle(color: Colors.white)),
+      return Dialog(
+        backgroundColor: Colors.grey[800],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF7ED957), // Green color from your app
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'OK',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       );
     },
   );
@@ -33,10 +78,15 @@ void httpErrorHandle({
       onSuccess();
       break;
     case 400:
-      showAlert(context, "Network Error", " Bad request, please check you are connected to a network.");
+      final Map<String, dynamic> res = jsonDecode(response.body);
+      showAlert(context, "Bad Request", res["msg"]);
+      break;
+    case 404:
+      final Map<String, dynamic> res = jsonDecode(response.body);
+      showAlert(context, "Not Found", res["msg"]);
       break;
     case 500:
-      showAlert(context, "Server Down","The server is currently down, please try again later.");
+      showAlert(context, "Server Down", "The server is currently down, please try again later.");
       break;
     default:
       showAlert(context, "Alert", response.body);

@@ -173,8 +173,10 @@ class AuthService {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && (data['success'] ?? true)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Verification code sent to email')),
+        showAlert(
+          context,
+          'Success',
+          'Verification code sent to your email!',
         );
         return true;
       } else {
@@ -207,8 +209,10 @@ class AuthService {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && (data['success'] ?? true)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password reset successfully')),
+        showAlert(
+          context,
+          'Success',
+          'Password reset successfully!',
         );
         Navigator.of(context).pop();
         return true;
