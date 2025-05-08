@@ -105,7 +105,7 @@ class AuthService {
         },
       );
     } catch (e) {
-      showAlert(context,'Error', "Some error occured, please try again later.");
+      showAlert(context,'Error', e.toString());
     }
   }
 
