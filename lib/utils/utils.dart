@@ -9,7 +9,7 @@ void showAlert(BuildContext context, String title, String text) {
     barrierColor: Colors.black54,
     builder: (BuildContext context) {
       return Dialog(
-        backgroundColor: Colors.grey[800],
+        backgroundColor: Colors.grey[700],
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -21,8 +21,8 @@ void showAlert(BuildContext context, String title, String text) {
               Text(
                 title,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
+                  color: const Color(0xFF7ED957),
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
@@ -31,7 +31,7 @@ void showAlert(BuildContext context, String title, String text) {
               Text(
                 text,
                 style: const TextStyle(
-                  color: Colors.white70,
+                  color: Colors.white,
                   fontSize: 16,
                 ),
                 textAlign: TextAlign.center,
@@ -86,7 +86,8 @@ void httpErrorHandle({
       showAlert(context, "Not Found", res["msg"]);
       break;
     case 500:
-      showAlert(context, "Server Down", "The server is currently down, please try again later.");
+      final Map<String, dynamic> res = jsonDecode(response.body);
+      showAlert(context, "Server Down", res["msg"]);
       break;
     default:
       showAlert(context, "Alert", response.body);
