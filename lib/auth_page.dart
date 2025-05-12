@@ -143,7 +143,28 @@ class _AuthPageState extends State<AuthPage>
     });
   }
 
-  void signUpUser() {
+  Future<bool> validateAuthCode() async {
+  setState(() {
+    _isVerifying = true;
+    _verificationCodeError = null;
+  });
+  final res = await _authService.validateAuthCode(
+    email: _emailController.text,
+    code: _verificationCodeController.text,
+    context: context,
+  );
+  setState(() {
+    _isVerifying = false;
+  });
+  if (!res) {
+    setState(() {
+      _verificationCodeError = 'Invalid or expired verification code';
+    });
+  }
+  return res;
+}
+
+  Future<void> signUpUser() async {
     if (!_validateInputs()) return;
     
     // Check if verification code has been sent
@@ -151,6 +172,8 @@ class _AuthPageState extends State<AuthPage>
       sendVerificationCode();
       return;
     }
+
+    if (!await validateAuthCode()) return;
     
     setState(() {
       _isLoading = true;

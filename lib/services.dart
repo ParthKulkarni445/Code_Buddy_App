@@ -193,42 +193,30 @@ class AuthService {
     }
   }
 
-//   /// Resets password; returns true on success
-//   Future<bool> resetPassword({
-//     required String email,
-//     required String verificationCode,
-//     required String newPassword,
-//     required BuildContext context,
-//   }) async {
-//     try {
-//       final response = await http.post(
-//         Uri.parse('${Constants.uri}/api/reset-password'),
-//         headers: {'Content-Type': 'application/json'},
-//         body: jsonEncode({
-//           'email': email,
-//           'verificationCode': verificationCode,
-//           'newPassword': newPassword,
-//         }),
-//       );
-
-//       final data = jsonDecode(response.body);
-//       if (response.statusCode == 200 && (data['success'] ?? true)) {
-//         showAlert(
-//           context,
-//           'Success',
-//           'Password reset successfully!',
-//         );
-//         Navigator.of(context).pop();
-//         return true;
-//       } else {
-//         showAlert(context,'Error', data['msg'] ?? 'Failed to reset password');
-//         return false;
-//       }
-//     } catch (e) {
-//       showAlert(context, 'Error','An error occurred. Please try again.');
-//       return false;
-//     }
-//   }
+  // Add this to AuthService
+Future<bool> validateAuthCode({
+  required String email,
+  required String code,
+  required BuildContext context,
+}) async {
+  try {
+    final res = await http.post(
+      Uri.parse('${Constants.uri}/api/validate-auth-code'),
+      headers: {'Content-Type': 'application/json; charset=UTF-8'},
+      body: jsonEncode({'email': email, 'verificationCode': code}),
+    );
+    final data = jsonDecode(res.body);
+    if (res.statusCode == 200 && data['success'] == true) {
+      return true;
+    } else {
+      showAlert(context, 'Error', data['msg'] ?? 'Invalid code');
+      return false;
+    }
+  } catch (e) {
+    showAlert(context, 'Error', 'Could not validate code. Please try again.');
+    return false;
+  }
+}
 }
 
 class ApiService {
