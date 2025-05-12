@@ -33,14 +33,13 @@ class AuthService {
   void signUpUser({
     required BuildContext context,
     required String email,
-    required String password,
     required String handle,
+    Function? onSuccess,
   }) async {
     try {
       User user = User(
         id: '',
         handle: handle,
-        password: password,
         email: email,
         token: '',
       );
@@ -65,13 +64,18 @@ class AuthService {
       );
     } catch (e) {
       showAlert(context,'Error', e.toString());
+    } finally {
+      if (onSuccess != null) {
+        onSuccess();
+      }
     }
+
   }
 
   void signInUser({
     required BuildContext context,
     required String handle,
-    required String password,
+    Function? onSuccess,
   }) async {
     try {
       var userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -81,7 +85,6 @@ class AuthService {
         Uri.parse('${Constants.uri}/api/signin'),
         body: jsonEncode({
           'handle': handle,
-          'password': password,
         }),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
@@ -105,7 +108,11 @@ class AuthService {
         },
       );
     } catch (e) {
-      showAlert(context,'Error', e.toString());
+      showAlert(context,'Error', "Some error occured, please try again later.");
+    } finally {
+      if (onSuccess != null) {
+        onSuccess();
+      }
     }
   }
 
@@ -163,7 +170,7 @@ class AuthService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('${Constants.uri}/api/forgot-password'),
+        Uri.parse('${Constants.uri}/api/verify-email'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
       );
@@ -186,42 +193,42 @@ class AuthService {
     }
   }
 
-  /// Resets password; returns true on success
-  Future<bool> resetPassword({
-    required String email,
-    required String verificationCode,
-    required String newPassword,
-    required BuildContext context,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('${Constants.uri}/api/reset-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'verificationCode': verificationCode,
-          'newPassword': newPassword,
-        }),
-      );
+//   /// Resets password; returns true on success
+//   Future<bool> resetPassword({
+//     required String email,
+//     required String verificationCode,
+//     required String newPassword,
+//     required BuildContext context,
+//   }) async {
+//     try {
+//       final response = await http.post(
+//         Uri.parse('${Constants.uri}/api/reset-password'),
+//         headers: {'Content-Type': 'application/json'},
+//         body: jsonEncode({
+//           'email': email,
+//           'verificationCode': verificationCode,
+//           'newPassword': newPassword,
+//         }),
+//       );
 
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200 && (data['success'] ?? true)) {
-        showAlert(
-          context,
-          'Success',
-          'Password reset successfully!',
-        );
-        Navigator.of(context).pop();
-        return true;
-      } else {
-        showAlert(context,'Error', data['msg'] ?? 'Failed to reset password');
-        return false;
-      }
-    } catch (e) {
-      showAlert(context, 'Error','An error occurred. Please try again.');
-      return false;
-    }
-  }
+//       final data = jsonDecode(response.body);
+//       if (response.statusCode == 200 && (data['success'] ?? true)) {
+//         showAlert(
+//           context,
+//           'Success',
+//           'Password reset successfully!',
+//         );
+//         Navigator.of(context).pop();
+//         return true;
+//       } else {
+//         showAlert(context,'Error', data['msg'] ?? 'Failed to reset password');
+//         return false;
+//       }
+//     } catch (e) {
+//       showAlert(context, 'Error','An error occurred. Please try again.');
+//       return false;
+//     }
+//   }
 }
 
 class ApiService {

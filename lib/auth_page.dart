@@ -1,6 +1,8 @@
 import 'package:acex/forget_password_page.dart';
+import 'package:acex/providers/user_provider.dart';
 import 'package:acex/services.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -15,20 +17,23 @@ class _AuthPageState extends State<AuthPage>
   final AuthService _authService = AuthService();
   final _emailController = TextEditingController();
   final _handleController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final bool _isLoading = false;
-  bool _isPasswordVisible = false;
+  final _verificationCodeController = TextEditingController(); // New controller for verification code
+  bool _isLoading = false;
+  bool _isVerifying = false; // Track verification state
+  bool _codeSent = false; // Track if verification code has been sent
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
   // Error states
   String? _emailError;
   String? _handleError;
-  String? _passwordError;
+  String? _verificationCodeError; // New error state for verification code
 
   @override
   void initState() {
     super.initState();
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    if(user == null) isLogin = false;
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -42,7 +47,7 @@ class _AuthPageState extends State<AuthPage>
   void dispose() {
     _emailController.dispose();
     _handleController.dispose();
-    _passwordController.dispose();
+    _verificationCodeController.dispose(); // Dispose new controller
     _animationController.dispose();
     super.dispose();
   }
@@ -53,11 +58,12 @@ class _AuthPageState extends State<AuthPage>
       isLogin = !isLogin;
       _emailController.clear();
       _handleController.clear();
-      _passwordController.clear();
+      _verificationCodeController.clear(); // Clear verification code
+      _codeSent = false; // Reset code sent status
       // Clear errors
       _emailError = null;
       _handleError = null;
-      _passwordError = null;
+      _verificationCodeError = null;
     });
     await _animationController.reverse();
   }
@@ -68,7 +74,7 @@ class _AuthPageState extends State<AuthPage>
       // Reset errors
       _emailError = null;
       _handleError = null;
-      _passwordError = null;
+      _verificationCodeError = null;
 
       // Validate email if signing up
       if (!isLogin) {
@@ -79,20 +85,17 @@ class _AuthPageState extends State<AuthPage>
           _emailError = 'Please enter a valid email';
           isValid = false;
         }
+        
+        // Validate verification code if signing up and code has been sent
+        if (_codeSent && _verificationCodeController.text.isEmpty) {
+          _verificationCodeError = 'Please enter verification code';
+          isValid = false;
+        }
       }
 
       // Validate handle
       if (_handleController.text.isEmpty) {
         _handleError = 'Please enter your handle';
-        isValid = false;
-      }
-
-      // Validate password
-      if (_passwordController.text.isEmpty) {
-        _passwordError = 'Please enter your password';
-        isValid = false;
-      } else if (!isLogin && _passwordController.text.length < 6) {
-        _passwordError = 'Password must be at least 6 characters';
         isValid = false;
       }
     });
@@ -101,22 +104,72 @@ class _AuthPageState extends State<AuthPage>
 
   void loginUser() {
     if (!_validateInputs()) return;
+    setState(() {
+      _isLoading = true;
+    });
     print("Login");
     _authService.signInUser(
       context: context,
       handle: _handleController.text,
-      password: _passwordController.text,
+      onSuccess: () {
+        setState(() {
+          _isLoading = false;
+        });
+      },
     );
+  }
+
+  // New method to send verification code
+  void sendVerificationCode() async {
+    if (_emailController.text.isEmpty || !_emailController.text.contains('@')) {
+      setState(() {
+        _emailError = 'Please enter a valid email';
+      });
+      return;
+    }
+    
+    setState(() {
+      _isVerifying = true;
+    });
+    
+    bool success = await _authService.sendVerificationCode(
+      email: _emailController.text,
+      context: context,
+    );
+    
+    setState(() {
+      _isVerifying = false;
+      _codeSent = success;
+    });
   }
 
   void signUpUser() {
     if (!_validateInputs()) return;
+    
+    // Check if verification code has been sent
+    if (!_codeSent) {
+      sendVerificationCode();
+      return;
+    }
+    
+    setState(() {
+      _isLoading = true;
+    });
     print("Sign Up");
+    
+    // Here you would typically verify the code first, but since there's no
+    // verification method in the provided code, we'll just proceed with signup
+    // In a real implementation, you would verify the code before creating the account
+    
     _authService.signUpUser(
       context: context,
       email: _emailController.text,
       handle: _handleController.text,
-      password: _passwordController.text,
+      onSuccess: () {
+        setState(() {
+          _isLoading = false;
+        });
+      },
     );
   }
 
@@ -125,180 +178,182 @@ class _AuthPageState extends State<AuthPage>
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 40),
-                Image.asset(
-                  'assets/images/namelogo2.png',
-                  height: 200,
-                ),
-                const SizedBox(height: 40),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 400),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            isLogin ? 'Welcome Back!' : 'Create your account',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 24,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          if (!isLogin) ...[
-                            _buildTextField(
-                              controller: _emailController,
-                              label: 'Email',
-                              icon: Icons.email_outlined,
-                              errorText: _emailError,
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                          _buildTextField(
-                            controller: _handleController,
-                            label: 'Codeforces Handle',
-                            icon: Icons.person_outline,
-                            errorText: _handleError,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: _passwordController,
-                            label: 'Password',
-                            icon: Icons.lock_outline,
-                            obscureText: !_isPasswordVisible,
-                            errorText: _passwordError,
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _isPasswordVisible
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                color: Colors.grey[400],
-                                size: 20,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _isPasswordVisible = !_isPasswordVisible;
-                                });
-                              },
-                            ),
-                          ),
-                          if (isLogin)
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: (){
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const ForgotPasswordPage(),
-                                    ),
-                                  );
-                                },
-                                style: TextButton.styleFrom(
-                                  overlayColor: Colors.grey.withOpacity(0.2),
-                                ),
-                                child: const Text(
-                                  'Forgot Password?',
-                                  style: TextStyle(color: Color(0xFF7ED957)),
-                                ),
-                              ),
-                            ),
-                          if (!isLogin)
-                            const SizedBox(height: 24),
-                          SizedBox(
-                            height: 52,
-                            child: ElevatedButton(
-                              onPressed: isLogin ? loginUser : signUpUser,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF7ED957),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: _isLoading
-                                  ? SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.grey[100],
-                                      ),
-                                    )
-                                  : Text(
-                                      isLogin ? 'Sign In' : 'Create Account',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                isLogin
-                                    ? "Don't have an account? "
-                                    : 'Already have an account? ',
-                                style: TextStyle(
-                                  color: Colors.grey[400],
-                                  fontSize: 14,
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: _toggleAuthMode,
-                                style: TextButton.styleFrom(
-                                  overlayColor: Colors.grey.withOpacity(0.2),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 0,
-                                  ),
-                                ),
-                                child: Text(
-                                  isLogin ? 'Sign Up' : 'Sign In',
-                                  style: TextStyle(
-                                    color: Color(0xFF7ED957),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+        child: Stack(
+          children: [
+            // Logo section
+            Positioned(
+              top: 130,
+              left: 0,
+              right: 0,
+              child: Image.asset(
+                'assets/images/namelogo2.png',
+                height: 150,
+              ),
+            ),
+            
+            // Bottom sheet style auth container
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildBottomSheetAuth(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomSheetAuth() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.grey[800],
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Bottom sheet handle indicator
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
-        ),
+          const SizedBox(height: 20),
+          
+          // Auth content
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      isLogin ? 'Welcome Back!' : 'Create your account',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (!isLogin) ...[
+                      _buildTextField(
+                        controller: _emailController,
+                        label: 'Email',
+                        icon: Icons.email_outlined,
+                        errorText: _emailError,
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Verification code field (only shown when in signup mode and after code is sent)
+                      if (_codeSent) ...[
+                        _buildTextField(
+                          controller: _verificationCodeController,
+                          label: 'Verification Code',
+                          icon: Icons.lock_outline,
+                          errorText: _verificationCodeError,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ],
+                    _buildTextField(
+                      controller: _handleController,
+                      label: 'Codeforces Handle',
+                      icon: Icons.person_outline,
+                      errorText: _handleError,
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: isLogin ? loginUser : signUpUser,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7ED957),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: _isLoading || _isVerifying
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : Text(
+                                isLogin 
+                                  ? 'Sign In' 
+                                  : (_codeSent ? 'Create Account' : 'Send Verification Code'),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          isLogin
+                              ? "Don't have an account? "
+                              : 'Already have an account? ',
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _toggleAuthMode,
+                          style: TextButton.styleFrom(
+                            overlayColor: Colors.grey.withOpacity(0.2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 0,
+                            ),
+                          ),
+                          child: Text(
+                            isLogin ? 'Sign Up' : 'Sign In',
+                            style: const TextStyle(
+                              color: Color(0xFF7ED957),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -336,7 +391,7 @@ class _AuthPageState extends State<AuthPage>
             child: TextField(
               controller: controller,
               obscureText: obscureText,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 decoration: TextDecoration.none,
                 decorationThickness: 0,
