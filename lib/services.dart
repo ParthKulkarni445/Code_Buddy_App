@@ -656,11 +656,15 @@ class ClubService {
     bool isPublic = true,
   }) async {
     try {
+      var userProvider = Provider.of<UserProvider>(context, listen: false);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('x-auth-token');
+
       final response = await http.post(
         Uri.parse('${Constants.uri}/api/clubs'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': await SecureStorageService.readData('x-auth-token') ?? '',
+          'x-auth-token': token ?? '',
         },
         body: jsonEncode({
           'name': name,
@@ -670,7 +674,7 @@ class ClubService {
           'isPublic': isPublic,
         }),
       );
-      
+      print(response.body); 
       String clubId = '';
       httpErrorHandle(
         response: response,
@@ -678,6 +682,7 @@ class ClubService {
         onSuccess: () {
           final data = jsonDecode(response.body);
           clubId = data['clubId'];
+          showAlert(context, 'Success', 'Club created successfully with ID: $clubId');
         },
       );
       return clubId;
