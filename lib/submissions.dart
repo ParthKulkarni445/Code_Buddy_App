@@ -262,7 +262,7 @@ class _SubmissionsPageState extends State<SubmissionsPage> {
                     children: [
                       Flexible(
                         child: Text(
-                          submission['problem']['name'],
+                          "${submission['problem']['contestId']}${submission['problem']['index']} | ${submission['problem']['name']}",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

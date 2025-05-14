@@ -49,6 +49,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   flutter_native_splash: ^2.4.1
   syncfusion_flutter_gauges: ^28.2.9
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

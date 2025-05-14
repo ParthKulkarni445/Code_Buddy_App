@@ -12,6 +12,8 @@ import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:cloud_functions/cloud_functions.dart';
 
 class ProblemDetails {
   final String title;
@@ -27,6 +29,182 @@ class ProblemDetails {
     required this.outputSpec,
     required this.examples,
   });
+}
+
+class Club {
+  final String id;
+  final String name;
+  final String description;
+  final String createdBy;
+  final DateTime createdAt;
+  final String? bannerUrl;
+  final String? avatarUrl;
+  final List<String> members;
+  final List<String> admins;
+  final int memberCount;
+  final bool isPublic;
+
+  Club({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.createdBy,
+    required this.createdAt,
+    this.bannerUrl,
+    this.avatarUrl,
+    required this.members,
+    required this.admins,
+    required this.memberCount,
+    required this.isPublic,
+  });
+
+  factory Club.fromJson(Map<String, dynamic> json) {
+    return Club(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+      createdBy: json['createdBy'] ?? '',
+      createdAt: json['createdAt'] != null 
+          ? (json['createdAt'] is DateTime 
+              ? json['createdAt'] 
+              : DateTime.parse(json['createdAt']))
+          : DateTime.now(),
+      bannerUrl: json['bannerUrl'],
+      avatarUrl: json['avatarUrl'],
+      members: List<String>.from(json['members'] ?? []),
+      admins: List<String>.from(json['admins'] ?? []),
+      memberCount: json['memberCount'] ?? 0,
+      isPublic: json['isPublic'] ?? true,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'createdBy': createdBy,
+      'createdAt': createdAt.toIso8601String(),
+      'bannerUrl': bannerUrl,
+      'avatarUrl': avatarUrl,
+      'members': members,
+      'admins': admins,
+      'memberCount': memberCount,
+      'isPublic': isPublic,
+    };
+  }
+}
+
+class ClubDiscussion {
+  final String id;
+  final String clubId;
+  final String title;
+  final String content;
+  final String authorId;
+  final String authorName;
+  final DateTime createdAt;
+  final int commentCount;
+  final int likeCount;
+
+  ClubDiscussion({
+    required this.id,
+    required this.clubId,
+    required this.title,
+    required this.content,
+    required this.authorId,
+    required this.authorName,
+    required this.createdAt,
+    required this.commentCount,
+    required this.likeCount,
+  });
+
+  factory ClubDiscussion.fromJson(Map<String, dynamic> json) {
+    return ClubDiscussion(
+      id: json['id'] ?? '',
+      clubId: json['clubId'] ?? '',
+      title: json['title'] ?? '',
+      content: json['content'] ?? '',
+      authorId: json['authorId'] ?? '',
+      authorName: json['authorName'] ?? '',
+      createdAt: json['createdAt'] != null 
+          ? (json['createdAt'] is DateTime 
+              ? json['createdAt'] 
+              : DateTime.parse(json['createdAt']))
+          : DateTime.now(),
+      commentCount: json['commentCount'] ?? 0,
+      likeCount: json['likeCount'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'clubId': clubId,
+      'title': title,
+      'content': content,
+      'authorId': authorId,
+      'authorName': authorName,
+      'createdAt': createdAt.toIso8601String(),
+      'commentCount': commentCount,
+      'likeCount': likeCount,
+    };
+  }
+}
+
+class ClubProblem {
+  final String id;
+  final String clubId;
+  final String title;
+  final String description;
+  final String difficulty;
+  final int points;
+  final String authorId;
+  final DateTime createdAt;
+  final int solvedCount;
+
+  ClubProblem({
+    required this.id,
+    required this.clubId,
+    required this.title,
+    required this.description,
+    required this.difficulty,
+    required this.points,
+    required this.authorId,
+    required this.createdAt,
+    required this.solvedCount,
+  });
+
+  factory ClubProblem.fromJson(Map<String, dynamic> json) {
+    return ClubProblem(
+      id: json['id'] ?? '',
+      clubId: json['clubId'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      difficulty: json['difficulty'] ?? 'medium',
+      points: json['points'] ?? 100,
+      authorId: json['authorId'] ?? '',
+      createdAt: json['createdAt'] != null 
+          ? (json['createdAt'] is DateTime 
+              ? json['createdAt'] 
+              : DateTime.parse(json['createdAt']))
+          : DateTime.now(),
+      solvedCount: json['solvedCount'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'clubId': clubId,
+      'title': title,
+      'description': description,
+      'difficulty': difficulty,
+      'points': points,
+      'authorId': authorId,
+      'createdAt': createdAt.toIso8601String(),
+      'solvedCount': solvedCount,
+    };
+  }
 }
 
 class AuthService {
@@ -465,6 +643,305 @@ class ApiService {
       }
     } else {
       throw Exception('Failed to fetch user info');
+    }
+  }
+}
+
+class ClubService {
+  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  
+  // Create a new club
+  Future<String> createClub({
+    required String name,
+    required String description,
+    required String createdBy,
+    String? bannerUrl,
+    String? avatarUrl,
+    bool isPublic = true,
+  }) async {
+    try {
+      final HttpsCallable callable = _functions.httpsCallable('createClub');
+      
+      final result = await callable.call({
+        'name': name,
+        'description': description,
+        'bannerUrl': bannerUrl,
+        'avatarUrl': avatarUrl,
+        'isPublic': isPublic,
+      });
+      
+      final data = result.data as Map<String, dynamic>;
+      
+      if (data['success'] == true) {
+        return data['clubId'];
+      } else {
+        throw Exception('Failed to create club: ${data['message']}');
+      }
+    } catch (e) {
+      print('Error creating club: $e');
+      throw Exception('Failed to create club');
+    }
+  }
+  
+  // Get club by ID
+  Future<Club> getClubById(String clubId) async {
+    try {
+      final HttpsCallable callable = _functions.httpsCallable('getClubById');
+      
+      final result = await callable.call({
+        'clubId': clubId,
+      });
+      
+      final data = result.data as Map<String, dynamic>;
+      
+      if (data['success'] == true) {
+        return Club.fromJson(data['club']);
+      } else {
+        throw Exception('Failed to get club: ${data['message']}');
+      }
+    } catch (e) {
+      print('Error getting club: $e');
+      throw Exception('Failed to get club');
+    }
+  }
+  
+  // Get all clubs
+  Future<List<Club>> getAllClubs() async {
+    try {
+      final HttpsCallable callable = _functions.httpsCallable('getAllClubs');
+      
+      final result = await callable.call({});
+      
+      final data = result.data as Map<String, dynamic>;
+      
+      if (data['success'] == true) {
+        final clubsData = data['clubs'] as List<dynamic>;
+        return clubsData.map((clubData) => Club.fromJson(clubData)).toList();
+      } else {
+        throw Exception('Failed to get clubs: ${data['message']}');
+      }
+    } catch (e) {
+      print('Error getting clubs: $e');
+      throw Exception('Failed to get clubs');
+    }
+  }
+  
+  // Get clubs for a user
+  Future<List<Club>> getUserClubs(String userId) async {
+    try {
+      final HttpsCallable callable = _functions.httpsCallable('getUserClubs');
+      
+      final result = await callable.call({
+        'userId': userId,
+      });
+      
+      final data = result.data as Map<String, dynamic>;
+      
+      if (data['success'] == true) {
+        final clubsData = data['clubs'] as List<dynamic>;
+        return clubsData.map((clubData) => Club.fromJson(clubData)).toList();
+      } else {
+        throw Exception('Failed to get user clubs: ${data['message']}');
+      }
+    } catch (e) {
+      print('Error getting user clubs: $e');
+      throw Exception('Failed to get user clubs');
+    }
+  }
+  
+  // Join a club
+  Future<void> joinClub(String clubId, String userId) async {
+    try {
+      final HttpsCallable callable = _functions.httpsCallable('joinClub');
+      
+      final result = await callable.call({
+        'clubId': clubId,
+      });
+      
+      final data = result.data as Map<String, dynamic>;
+      
+      if (data['success'] != true) {
+        throw Exception('Failed to join club: ${data['message']}');
+      }
+    } catch (e) {
+      print('Error joining club: $e');
+      throw Exception('Failed to join club');
+    }
+  }
+  
+  // Leave a club
+  Future<void> leaveClub(String clubId, String userId) async {
+    try {
+      final HttpsCallable callable = _functions.httpsCallable('leaveClub');
+      
+      final result = await callable.call({
+        'clubId': clubId,
+      });
+      
+      final data = result.data as Map<String, dynamic>;
+      
+      if (data['success'] != true) {
+        throw Exception('Failed to leave club: ${data['message']}');
+      }
+    } catch (e) {
+      print('Error leaving club: $e');
+      throw Exception('Failed to leave club');
+    }
+  }
+  
+  // Add a discussion to a club
+  Future<String> addDiscussion({
+    required String clubId,
+    required String title,
+    required String content,
+    required String authorId,
+    required String authorName,
+  }) async {
+    try {
+      final HttpsCallable callable = _functions.httpsCallable('addDiscussion');
+      
+      final result = await callable.call({
+        'clubId': clubId,
+        'title': title,
+        'content': content,
+        'authorName': authorName,
+      });
+      
+      final data = result.data as Map<String, dynamic>;
+      
+      if (data['success'] == true) {
+        return data['discussionId'];
+      } else {
+        throw Exception('Failed to add discussion: ${data['message']}');
+      }
+    } catch (e) {
+      print('Error adding discussion: $e');
+      throw Exception('Failed to add discussion');
+    }
+  }
+  
+  // Get discussions for a club
+  Future<List<ClubDiscussion>> getClubDiscussions(String clubId) async {
+    try {
+      final HttpsCallable callable = _functions.httpsCallable('getClubDiscussions');
+      
+      final result = await callable.call({
+        'clubId': clubId,
+      });
+      
+      final data = result.data as Map<String, dynamic>;
+      
+      if (data['success'] == true) {
+        final discussionsData = data['discussions'] as List<dynamic>;
+        return discussionsData.map((discussionData) => ClubDiscussion.fromJson(discussionData)).toList();
+      } else {
+        throw Exception('Failed to get discussions: ${data['message']}');
+      }
+    } catch (e) {
+      print('Error getting discussions: $e');
+      throw Exception('Failed to get discussions');
+    }
+  }
+  
+  // Add a problem to a club
+  Future<String> addProblem({
+    required String clubId,
+    required String title,
+    required String description,
+    required String difficulty,
+    required int points,
+    required String authorId,
+  }) async {
+    try {
+      final HttpsCallable callable = _functions.httpsCallable('addProblem');
+      
+      final result = await callable.call({
+        'clubId': clubId,
+        'title': title,
+        'description': description,
+        'difficulty': difficulty,
+        'points': points,
+      });
+      
+      final data = result.data as Map<String, dynamic>;
+      
+      if (data['success'] == true) {
+        return data['problemId'];
+      } else {
+        throw Exception('Failed to add problem: ${data['message']}');
+      }
+    } catch (e) {
+      print('Error adding problem: $e');
+      throw Exception('Failed to add problem');
+    }
+  }
+  
+  // Get problems for a club
+  Future<List<ClubProblem>> getClubProblems(String clubId) async {
+    try {
+      final HttpsCallable callable = _functions.httpsCallable('getClubProblems');
+      
+      final result = await callable.call({
+        'clubId': clubId,
+      });
+      
+      final data = result.data as Map<String, dynamic>;
+      
+      if (data['success'] == true) {
+        final problemsData = data['problems'] as List<dynamic>;
+        return problemsData.map((problemData) => ClubProblem.fromJson(problemData)).toList();
+      } else {
+        throw Exception('Failed to get problems: ${data['message']}');
+      }
+    } catch (e) {
+      print('Error getting problems: $e');
+      throw Exception('Failed to get problems');
+    }
+  }
+  
+  // Get club leaderboard
+  Future<List<Map<String, dynamic>>> getClubLeaderboard(String clubId) async {
+    try {
+      final HttpsCallable callable = _functions.httpsCallable('getClubLeaderboard');
+      
+      final result = await callable.call({
+        'clubId': clubId,
+      });
+      
+      final data = result.data as Map<String, dynamic>;
+      
+      if (data['success'] == true) {
+        final leaderboardData = data['leaderboard'] as List<dynamic>;
+        return leaderboardData.map((entry) => entry as Map<String, dynamic>).toList();
+      } else {
+        throw Exception('Failed to get leaderboard: ${data['message']}');
+      }
+    } catch (e) {
+      print('Error getting leaderboard: $e');
+      throw Exception('Failed to get leaderboard');
+    }
+  }
+  
+  // Search clubs by name
+  Future<List<Club>> searchClubs(String query) async {
+    try {
+      final HttpsCallable callable = _functions.httpsCallable('searchClubs');
+      
+      final result = await callable.call({
+        'query': query,
+      });
+      
+      final data = result.data as Map<String, dynamic>;
+      
+      if (data['success'] == true) {
+        final clubsData = data['clubs'] as List<dynamic>;
+        return clubsData.map((clubData) => Club.fromJson(clubData)).toList();
+      } else {
+        throw Exception('Failed to search clubs: ${data['message']}');
+      }
+    } catch (e) {
+      print('Error searching clubs: $e');
+      throw Exception('Failed to search clubs');
     }
   }
 }

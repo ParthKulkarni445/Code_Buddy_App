@@ -1,4 +1,5 @@
 import 'package:acex/problemset.dart';
+import 'package:acex/social_page.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
@@ -45,7 +46,7 @@ class _LandingPageState extends State<LandingPage> {
     pages = [
       ProfilePage(handle: handle),
       const ContestsPage(),
-      const FriendsPage(),
+      const SocialPage(),
       SubmissionsPage(handle: handle),
       StatsPage(handle: handle),
       ProblemPage(handle: handle),
@@ -95,7 +96,7 @@ class _LandingPageState extends State<LandingPage> {
                     items: [
                       _buildNavBarItem(FontAwesomeIcons.solidUser, 0),
                       _buildNavBarItem(FontAwesomeIcons.trophy, 1),
-                      _buildNavBarItem(FontAwesomeIcons.users, 2),
+                      _buildNavBarItem(FontAwesomeIcons.globe, 2),
                       _buildNavBarItem(FontAwesomeIcons.clipboardList, 3),
                       _buildNavBarItem(FontAwesomeIcons.magnifyingGlassChart, 4),
                       _buildNavBarItem(FontAwesomeIcons.book, 5),

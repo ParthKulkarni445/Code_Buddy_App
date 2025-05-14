@@ -282,6 +282,7 @@ class _StatsPageState extends State<StatsPage> {
                 ),
                 const SizedBox(height: 20),
                 Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(4),
@@ -307,8 +308,9 @@ class _StatsPageState extends State<StatsPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
+                Container(
                   height: 300,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), 
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final totalBars = indexCounts.length;
@@ -945,65 +947,71 @@ class _StatsPageState extends State<StatsPage> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 24),
-                DropdownButton<int>(
-                  dropdownColor: Colors.white,
-                  value: _currentPage,
-                  isExpanded: true,
-                  items: sortedRankKeys.asMap().entries.map((mapEntry) {
-                    final menuIndex = mapEntry.key;
-                    final rankKey = mapEntry.value;
-                    final menuRank = rankInfo[rankKey]!;
-
-                    return DropdownMenuItem<int>(
-                      value: menuIndex,
-                      child: Text(
-                        menuRank['name'],
-                        style: TextStyle(
-                          color: menuRank['color'],
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (index) {
-                    if (index != null) {
-                      setState(() {
-                        _currentPage = index;
-                      });
-                      _pageController.jumpToPage(index);
-                    }
-                  },
-                ),
-                SizedBox(
-                  height: 330,
-                  child: PageView.builder(
-                    controller: _pageController,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentPage = index;
-                      });
-                    },
-                    itemCount: sortedRankKeys.length,
-                    itemBuilder: (context, index) {
-                      final rankKey = sortedRankKeys[index];
-                      final rank = rankInfo[rankKey]!;
-                      final rankData = rankCounts[rankKey]!;
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 16.0, right: 10.0, left: 10.0),
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: Center(
-                                child: buildBarGraph(
-                                  rankData,
-                                  rank['color'],
-                                ),
-                              ),
-                            ),
-                          ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: DropdownButton<int>(
+                    dropdownColor: Colors.white,
+                    value: _currentPage,
+                    isExpanded: true,
+                    items: sortedRankKeys.asMap().entries.map((mapEntry) {
+                      final menuIndex = mapEntry.key;
+                      final rankKey = mapEntry.value;
+                      final menuRank = rankInfo[rankKey]!;
+                  
+                      return DropdownMenuItem<int>(
+                        value: menuIndex,
+                        child: Text(
+                          menuRank['name'],
+                          style: TextStyle(
+                            color: menuRank['color'],
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       );
+                    }).toList(),
+                    onChanged: (index) {
+                      if (index != null) {
+                        setState(() {
+                          _currentPage = index;
+                        });
+                        _pageController.jumpToPage(index);
+                      }
                     },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: SizedBox(
+                    height: 330,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentPage = index;
+                        });
+                      },
+                      itemCount: sortedRankKeys.length,
+                      itemBuilder: (context, index) {
+                        final rankKey = sortedRankKeys[index];
+                        final rank = rankInfo[rankKey]!;
+                        final rankData = rankCounts[rankKey]!;
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 16.0, right: 10.0, left: 10.0),
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: Center(
+                                  child: buildBarGraph(
+                                    rankData,
+                                    rank['color'],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],
