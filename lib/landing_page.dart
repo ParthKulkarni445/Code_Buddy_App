@@ -5,7 +5,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:acex/providers/user_provider.dart';
 import 'package:acex/contests_page.dart';
-import 'package:acex/friends_page.dart';
 import 'package:acex/profile_page.dart';
 import 'package:acex/stats_page.dart';
 import 'package:acex/submissions.dart';

@@ -52,16 +52,8 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   }
 
   Future<void> _searchClubs(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        _searchResults = [];
-        _isSearching = false;
-      });
-      return;
-    }
-
     try {
-      final results = await _clubService.searchClubs(query);
+      final results = await _clubService.searchClubs(context, query);
       setState(() {
         _searchResults = results;
       });
@@ -97,8 +89,8 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
 
     try {
       final user = Provider.of<UserProvider>(context, listen: false).user;
-      final userClubs = await _clubService.getUserClubs(user.id);
-      final allClubs = await _clubService.getAllClubs();
+      final userClubs = await _clubService.getUserClubs(context, user.id);
+      final allClubs = await _clubService.getAllClubs(context);
       
       // Sort popular clubs by member count
       final popularClubs = List<Club>.from(allClubs)
@@ -887,7 +879,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   Future<void> _joinClub(String clubId) async {
     try {
       final user = Provider.of<UserProvider>(context, listen: false).user;
-      await _clubService.joinClub(clubId, user.id);
+      await _clubService.joinClub(context, clubId);
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -997,7 +989,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: const Text('Create a Club'),
+            title: const Text(''),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1087,9 +1079,9 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
       );
       
       await _clubService.createClub(
+        context: context,
         name: name,
         description: description,
-        createdBy: user.id,
         isPublic: isPublic,
       );
       

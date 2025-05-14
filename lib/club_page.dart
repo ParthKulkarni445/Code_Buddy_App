@@ -45,7 +45,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
     });
     
     try {
-      final club = await _clubService.getClubById(widget.clubId);
+      final club = await _clubService.getClubById(context, widget.clubId);
       
       setState(() {
         _club = club;
@@ -77,7 +77,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
     });
     
     try {
-      final discussions = await _clubService.getClubDiscussions(widget.clubId);
+      final discussions = await _clubService.getClubDiscussions(context, widget.clubId);
       
       setState(() {
         _discussions = discussions;
@@ -97,7 +97,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
     });
     
     try {
-      final problems = await _clubService.getClubProblems(widget.clubId);
+      final problems = await _clubService.getClubProblems(context, widget.clubId);
       
       setState(() {
         _problems = problems;
@@ -117,7 +117,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
     });
     
     try {
-      final leaderboard = await _clubService.getClubLeaderboard(widget.clubId);
+      final leaderboard = await _clubService.getClubLeaderboard(context, widget.clubId);
       
       setState(() {
         _leaderboard = leaderboard;
@@ -879,44 +879,48 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
   Widget _buildFloatingActionButton() {
     if (_club == null) return const SizedBox.shrink();
     
-    final Color clubColor = _getClubColor(widget.clubName);
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final isMember = _club!.members.contains(user.id);
     
-    return AnimatedBuilder(
-      animation: _tabController,
-      builder: (context, child) {
-        // Show different FAB based on selected tab and user permissions
-        if (!_isUserMember()) {
+    if (!isMember) {
+      return _buildJoinButton();
+    }
+    
+    // Show different FAB based on current tab
+    switch (_tabController.index) {
+      case 0: // Discussions tab
+        return FloatingActionButton(
+          onPressed: (){},
+          child: const Icon(Icons.add_comment),
+          backgroundColor: _getClubColor(widget.clubName),
+        );
+      case 1: // Problems tab
+        if (_isUserAdmin()) {
           return FloatingActionButton(
-            onPressed: () => _joinClub(),
-            backgroundColor: clubColor,
-            child: const Icon(Icons.person_add, color: Colors.white),
+            onPressed: () => _showAddProblemDialog(),
+            child: const Icon(Icons.add),
+            backgroundColor: _getClubColor(widget.clubName),
           );
         }
-        
-        switch (_tabController.index) {
-          case 0: // Discussions
-            return FloatingActionButton(
-              onPressed: () {
-                _showNewDiscussionDialog();
-              },
-              backgroundColor: clubColor,
-              child: const Icon(Icons.add_comment, color: Colors.white),
-            );
-          case 1: // Problems
-            if (_isUserAdmin()) {
-              return FloatingActionButton(
-                onPressed: () {
-                  _showAddProblemDialog();
-                },
-                backgroundColor: clubColor,
-                child: const Icon(Icons.add, color: Colors.white),
-              );
-            }
-            return const SizedBox.shrink();
-          default:
-            return const SizedBox.shrink();
-        }
-      },
+        break;
+    }
+    
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildJoinButton() {
+    if (_club == null) return const SizedBox.shrink();
+    
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final isMember = _club!.members.contains(user.id);
+    
+    if (isMember) return const SizedBox.shrink();
+    
+    return FloatingActionButton.extended(
+      onPressed: _joinClub,
+      icon: const Icon(Icons.person_add),
+      label: const Text('Join Club'),
+      backgroundColor: _getClubColor(widget.clubName),
     );
   }
 
@@ -1002,10 +1006,10 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
       );
       
       await _clubService.addDiscussion(
+        context: context,
         clubId: widget.clubId,
         title: title,
         content: content,
-        authorId: user.id,
         authorName: user.handle,
       );
       
@@ -1186,12 +1190,12 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
       );
       
       await _clubService.addProblem(
+        context: context,
         clubId: widget.clubId,
         title: title,
         description: description,
         difficulty: difficulty,
         points: points,
-        authorId: user.id,
       );
       
       // Hide loading indicator
@@ -1319,16 +1323,12 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () {
               Navigator.pop(context);
               _leaveClub();
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Leave'),
+            child: const Text('Leave', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -1337,80 +1337,51 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
 
   Future<void> _joinClub() async {
     try {
-      final user = Provider.of<UserProvider>(context, listen: false).user;
-      
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-      
-      await _clubService.joinClub(widget.clubId, user.id);
-      
-      // Hide loading indicator
-      Navigator.pop(context);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Successfully joined the club'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      
-      _fetchClubDetails();
+      await _clubService.joinClub(context, widget.clubId);
+      // Refresh club details after joining
+      await _fetchClubDetails();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully joined the club'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
-      // Hide loading indicator
-      Navigator.pop(context);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to join club: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to join club: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   Future<void> _leaveClub() async {
     try {
-      final user = Provider.of<UserProvider>(context, listen: false).user;
-      
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-      
-      await _clubService.leaveClub(widget.clubId, user.id);
-      
-      // Hide loading indicator
-      Navigator.pop(context);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Successfully left the club'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      
-      // Go back to social page
-      Navigator.pop(context);
+      await _clubService.leaveClub(context, widget.clubId);
+      // Refresh club details after leaving
+      await _fetchClubDetails();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully left the club'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
-      // Hide loading indicator
-      Navigator.pop(context);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to leave club: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to leave club: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

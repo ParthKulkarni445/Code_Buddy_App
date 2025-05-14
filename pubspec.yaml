@@ -50,6 +50,8 @@ dependencies:
   flutter_native_splash: ^2.4.1
   syncfusion_flutter_gauges: ^28.2.9
   shimmer: ^3.0.0
+  firebase_auth: ^5.5.3
+  cloud_functions: ^5.5.0
 
 dev_dependencies:
   flutter_test:

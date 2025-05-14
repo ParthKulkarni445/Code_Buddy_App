@@ -12,8 +12,6 @@ import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import 'package:cloud_functions/cloud_functions.dart';
 
 class ProblemDetails {
   final String title;
@@ -648,300 +646,365 @@ class ApiService {
 }
 
 class ClubService {
-  final FirebaseFunctions _functions = FirebaseFunctions.instance;
-  
   // Create a new club
   Future<String> createClub({
+    required BuildContext context,
     required String name,
     required String description,
-    required String createdBy,
     String? bannerUrl,
     String? avatarUrl,
     bool isPublic = true,
   }) async {
     try {
-      final HttpsCallable callable = _functions.httpsCallable('createClub');
+      final response = await http.post(
+        Uri.parse('${Constants.uri}/api/clubs'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'x-auth-token': await SecureStorageService.readData('x-auth-token') ?? '',
+        },
+        body: jsonEncode({
+          'name': name,
+          'description': description,
+          'bannerUrl': bannerUrl,
+          'avatarUrl': avatarUrl,
+          'isPublic': isPublic,
+        }),
+      );
       
-      final result = await callable.call({
-        'name': name,
-        'description': description,
-        'bannerUrl': bannerUrl,
-        'avatarUrl': avatarUrl,
-        'isPublic': isPublic,
-      });
-      
-      final data = result.data as Map<String, dynamic>;
-      
-      if (data['success'] == true) {
-        return data['clubId'];
-      } else {
-        throw Exception('Failed to create club: ${data['message']}');
-      }
+      String clubId = '';
+      httpErrorHandle(
+        response: response,
+        context: context,
+        onSuccess: () {
+          final data = jsonDecode(response.body);
+          clubId = data['clubId'];
+        },
+      );
+      return clubId;
     } catch (e) {
-      print('Error creating club: $e');
-      throw Exception('Failed to create club');
+      print(e.toString());
+      showAlert(context, 'Error', 'Failed to create club');
+      return '';
     }
   }
   
   // Get club by ID
-  Future<Club> getClubById(String clubId) async {
+  Future<Club?> getClubById(BuildContext context, String clubId) async {
     try {
-      final HttpsCallable callable = _functions.httpsCallable('getClubById');
+      final response = await http.get(
+        Uri.parse('${Constants.uri}/api/clubs/$clubId'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      );
       
-      final result = await callable.call({
-        'clubId': clubId,
-      });
-      
-      final data = result.data as Map<String, dynamic>;
-      
-      if (data['success'] == true) {
-        return Club.fromJson(data['club']);
-      } else {
-        throw Exception('Failed to get club: ${data['message']}');
-      }
+      Club? club;
+      httpErrorHandle(
+        response: response,
+        context: context,
+        onSuccess: () {
+          final data = jsonDecode(response.body);
+          club = Club.fromJson(data['club']);
+        },
+      );
+      return club;
     } catch (e) {
-      print('Error getting club: $e');
-      throw Exception('Failed to get club');
+      showAlert(context, 'Error', 'Failed to get club');
+      return null; // Return null on error
     }
   }
   
   // Get all clubs
-  Future<List<Club>> getAllClubs() async {
+  Future<List<Club>> getAllClubs(BuildContext context) async {
     try {
-      final HttpsCallable callable = _functions.httpsCallable('getAllClubs');
+      final response = await http.get(
+        Uri.parse('${Constants.uri}/api/clubs'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      );
       
-      final result = await callable.call({});
-      
-      final data = result.data as Map<String, dynamic>;
-      
-      if (data['success'] == true) {
-        final clubsData = data['clubs'] as List<dynamic>;
-        return clubsData.map((clubData) => Club.fromJson(clubData)).toList();
-      } else {
-        throw Exception('Failed to get clubs: ${data['message']}');
-      }
+      List<Club> clubs = [];
+      httpErrorHandle(
+        response: response,
+        context: context,
+        onSuccess: () {
+          final data = jsonDecode(response.body);
+          final clubsData = data['clubs'] as List<dynamic>;
+          clubs = clubsData.map((clubData) => Club.fromJson(clubData)).toList();
+        },
+      );
+      return clubs;
     } catch (e) {
-      print('Error getting clubs: $e');
-      throw Exception('Failed to get clubs');
+      showAlert(context, 'Error', 'Failed to get clubs');
+      return []; // Return empty list on error
     }
   }
   
   // Get clubs for a user
-  Future<List<Club>> getUserClubs(String userId) async {
+  Future<List<Club>> getUserClubs(BuildContext context, String userId) async {
     try {
-      final HttpsCallable callable = _functions.httpsCallable('getUserClubs');
+      final response = await http.get(
+        Uri.parse('${Constants.uri}/api/users/$userId/clubs'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'x-auth-token': await SecureStorageService.readData('x-auth-token') ?? '',
+        },
+      );
       
-      final result = await callable.call({
-        'userId': userId,
-      });
-      
-      final data = result.data as Map<String, dynamic>;
-      
-      if (data['success'] == true) {
-        final clubsData = data['clubs'] as List<dynamic>;
-        return clubsData.map((clubData) => Club.fromJson(clubData)).toList();
-      } else {
-        throw Exception('Failed to get user clubs: ${data['message']}');
-      }
+      List<Club> clubs = [];
+      httpErrorHandle(
+        response: response,
+        context: context,
+        onSuccess: () {
+          final data = jsonDecode(response.body);
+          final clubsData = data['clubs'] as List<dynamic>;
+          clubs = clubsData.map((clubData) => Club.fromJson(clubData)).toList();
+        },
+      );
+      return clubs;
     } catch (e) {
-      print('Error getting user clubs: $e');
-      throw Exception('Failed to get user clubs');
+      showAlert(context, 'Error', 'Failed to get user clubs');
+      return []; // Return empty list on error
     }
   }
   
   // Join a club
-  Future<void> joinClub(String clubId, String userId) async {
+  Future<bool> joinClub(BuildContext context, String clubId) async {
     try {
-      final HttpsCallable callable = _functions.httpsCallable('joinClub');
+      final response = await http.post(
+        Uri.parse('${Constants.uri}/api/clubs/$clubId/join'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'x-auth-token': await SecureStorageService.readData('x-auth-token') ?? '',
+        },
+      );
       
-      final result = await callable.call({
-        'clubId': clubId,
-      });
-      
-      final data = result.data as Map<String, dynamic>;
-      
-      if (data['success'] != true) {
-        throw Exception('Failed to join club: ${data['message']}');
-      }
+      bool success = false;
+      httpErrorHandle(
+        response: response,
+        context: context,
+        onSuccess: () {
+          success = true;
+          showAlert(context, 'Success', 'Successfully joined the club');
+        },
+      );
+      return success;
     } catch (e) {
-      print('Error joining club: $e');
-      throw Exception('Failed to join club');
+      showAlert(context, 'Error', 'Failed to join club');
+      return false; // Return false on error
     }
   }
   
   // Leave a club
-  Future<void> leaveClub(String clubId, String userId) async {
+  Future<bool> leaveClub(BuildContext context, String clubId) async {
     try {
-      final HttpsCallable callable = _functions.httpsCallable('leaveClub');
+      final response = await http.post(
+        Uri.parse('${Constants.uri}/api/clubs/$clubId/leave'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'x-auth-token': await SecureStorageService.readData('x-auth-token') ?? '',
+        },
+      );
       
-      final result = await callable.call({
-        'clubId': clubId,
-      });
-      
-      final data = result.data as Map<String, dynamic>;
-      
-      if (data['success'] != true) {
-        throw Exception('Failed to leave club: ${data['message']}');
-      }
+      bool success = false;
+      httpErrorHandle(
+        response: response,
+        context: context,
+        onSuccess: () {
+          success = true;
+          showAlert(context, 'Success', 'Successfully left the club');
+        },
+      );
+      return success;
     } catch (e) {
-      print('Error leaving club: $e');
-      throw Exception('Failed to leave club');
+      showAlert(context, 'Error', 'Failed to leave club');
+      return false; // Return false on error
     }
   }
   
-  // Add a discussion to a club
+  // Add a discussion
   Future<String> addDiscussion({
+    required BuildContext context,
     required String clubId,
     required String title,
     required String content,
-    required String authorId,
     required String authorName,
   }) async {
     try {
-      final HttpsCallable callable = _functions.httpsCallable('addDiscussion');
+      final response = await http.post(
+        Uri.parse('${Constants.uri}/api/clubs/$clubId/discussions'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'x-auth-token': await SecureStorageService.readData('x-auth-token') ?? '',
+        },
+        body: jsonEncode({
+          'title': title,
+          'content': content,
+          'authorName': authorName,
+        }),
+      );
       
-      final result = await callable.call({
-        'clubId': clubId,
-        'title': title,
-        'content': content,
-        'authorName': authorName,
-      });
-      
-      final data = result.data as Map<String, dynamic>;
-      
-      if (data['success'] == true) {
-        return data['discussionId'];
-      } else {
-        throw Exception('Failed to add discussion: ${data['message']}');
-      }
+      String discussionId = '';
+      httpErrorHandle(
+        response: response,
+        context: context,
+        onSuccess: () {
+          final data = jsonDecode(response.body);
+          discussionId = data['discussionId'];
+        },
+      );
+      return discussionId;
     } catch (e) {
-      print('Error adding discussion: $e');
-      throw Exception('Failed to add discussion');
+      showAlert(context, 'Error', 'Failed to add discussion');
+      return ''; // Return empty string on error
     }
   }
   
-  // Get discussions for a club
-  Future<List<ClubDiscussion>> getClubDiscussions(String clubId) async {
+  // Get club discussions
+  Future<List<ClubDiscussion>> getClubDiscussions(BuildContext context, String clubId) async {
     try {
-      final HttpsCallable callable = _functions.httpsCallable('getClubDiscussions');
+      final response = await http.get(
+        Uri.parse('${Constants.uri}/api/clubs/$clubId/discussions'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      );
       
-      final result = await callable.call({
-        'clubId': clubId,
-      });
-      
-      final data = result.data as Map<String, dynamic>;
-      
-      if (data['success'] == true) {
-        final discussionsData = data['discussions'] as List<dynamic>;
-        return discussionsData.map((discussionData) => ClubDiscussion.fromJson(discussionData)).toList();
-      } else {
-        throw Exception('Failed to get discussions: ${data['message']}');
-      }
+      List<ClubDiscussion> discussions = [];
+      httpErrorHandle(
+        response: response,
+        context: context,
+        onSuccess: () {
+          final data = jsonDecode(response.body);
+          final discussionsData = data['discussions'] as List<dynamic>;
+          discussions = discussionsData.map((discussionData) => ClubDiscussion.fromJson(discussionData)).toList();
+        },
+      );
+      return discussions;
     } catch (e) {
-      print('Error getting discussions: $e');
-      throw Exception('Failed to get discussions');
+      showAlert(context, 'Error', 'Failed to get discussions');
+      return []; // Return empty list on error
     }
   }
   
-  // Add a problem to a club
+  // Add a problem
   Future<String> addProblem({
+    required BuildContext context,
     required String clubId,
     required String title,
     required String description,
     required String difficulty,
     required int points,
-    required String authorId,
   }) async {
     try {
-      final HttpsCallable callable = _functions.httpsCallable('addProblem');
+      final response = await http.post(
+        Uri.parse('${Constants.uri}/api/clubs/$clubId/problems'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'x-auth-token': await SecureStorageService.readData('x-auth-token') ?? '',
+        },
+        body: jsonEncode({
+          'title': title,
+          'description': description,
+          'difficulty': difficulty,
+          'points': points,
+        }),
+      );
       
-      final result = await callable.call({
-        'clubId': clubId,
-        'title': title,
-        'description': description,
-        'difficulty': difficulty,
-        'points': points,
-      });
-      
-      final data = result.data as Map<String, dynamic>;
-      
-      if (data['success'] == true) {
-        return data['problemId'];
-      } else {
-        throw Exception('Failed to add problem: ${data['message']}');
-      }
+      String problemId = '';
+      httpErrorHandle(
+        response: response,
+        context: context,
+        onSuccess: () {
+          final data = jsonDecode(response.body);
+          problemId = data['problemId'];
+        },
+      );
+      return problemId;
     } catch (e) {
-      print('Error adding problem: $e');
-      throw Exception('Failed to add problem');
+      showAlert(context, 'Error', 'Failed to add problem');
+      return ''; // Return empty string on error
     }
   }
   
-  // Get problems for a club
-  Future<List<ClubProblem>> getClubProblems(String clubId) async {
+  // Get club problems
+  Future<List<ClubProblem>> getClubProblems(BuildContext context, String clubId) async {
     try {
-      final HttpsCallable callable = _functions.httpsCallable('getClubProblems');
+      final response = await http.get(
+        Uri.parse('${Constants.uri}/api/clubs/$clubId/problems'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      );
       
-      final result = await callable.call({
-        'clubId': clubId,
-      });
-      
-      final data = result.data as Map<String, dynamic>;
-      
-      if (data['success'] == true) {
-        final problemsData = data['problems'] as List<dynamic>;
-        return problemsData.map((problemData) => ClubProblem.fromJson(problemData)).toList();
-      } else {
-        throw Exception('Failed to get problems: ${data['message']}');
-      }
+      List<ClubProblem> problems = [];
+      httpErrorHandle(
+        response: response,
+        context: context,
+        onSuccess: () {
+          final data = jsonDecode(response.body);
+          final problemsData = data['problems'] as List<dynamic>;
+          problems = problemsData.map((problemData) => ClubProblem.fromJson(problemData)).toList();
+        },
+      );
+      return problems;
     } catch (e) {
-      print('Error getting problems: $e');
-      throw Exception('Failed to get problems');
+      showAlert(context, 'Error', 'Failed to get problems');
+      return []; // Return empty list on error
     }
   }
   
   // Get club leaderboard
-  Future<List<Map<String, dynamic>>> getClubLeaderboard(String clubId) async {
+  Future<List<Map<String, dynamic>>> getClubLeaderboard(BuildContext context, String clubId) async {
     try {
-      final HttpsCallable callable = _functions.httpsCallable('getClubLeaderboard');
+      final response = await http.get(
+        Uri.parse('${Constants.uri}/api/clubs/$clubId/leaderboard'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      );
       
-      final result = await callable.call({
-        'clubId': clubId,
-      });
-      
-      final data = result.data as Map<String, dynamic>;
-      
-      if (data['success'] == true) {
-        final leaderboardData = data['leaderboard'] as List<dynamic>;
-        return leaderboardData.map((entry) => entry as Map<String, dynamic>).toList();
-      } else {
-        throw Exception('Failed to get leaderboard: ${data['message']}');
-      }
+      List<Map<String, dynamic>> leaderboard = [];
+      httpErrorHandle(
+        response: response,
+        context: context,
+        onSuccess: () {
+          final data = jsonDecode(response.body);
+          leaderboard = List<Map<String, dynamic>>.from(data['leaderboard']);
+        },
+      );
+      return leaderboard;
     } catch (e) {
-      print('Error getting leaderboard: $e');
-      throw Exception('Failed to get leaderboard');
+      showAlert(context, 'Error', 'Failed to get leaderboard');
+      return []; // Return empty list on error
     }
   }
   
-  // Search clubs by name
-  Future<List<Club>> searchClubs(String query) async {
+  // Search clubs
+  Future<List<Club>> searchClubs(BuildContext context, String query) async {
     try {
-      final HttpsCallable callable = _functions.httpsCallable('searchClubs');
+      final response = await http.get(
+        Uri.parse('${Constants.uri}/api/clubs/search?query=$query'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      );
       
-      final result = await callable.call({
-        'query': query,
-      });
-      
-      final data = result.data as Map<String, dynamic>;
-      
-      if (data['success'] == true) {
-        final clubsData = data['clubs'] as List<dynamic>;
-        return clubsData.map((clubData) => Club.fromJson(clubData)).toList();
-      } else {
-        throw Exception('Failed to search clubs: ${data['message']}');
-      }
+      List<Club> clubs = [];
+      httpErrorHandle(
+        response: response,
+        context: context,
+        onSuccess: () {
+          final data = jsonDecode(response.body);
+          final clubsData = data['clubs'] as List<dynamic>;
+          clubs = clubsData.map((clubData) => Club.fromJson(clubData)).toList();
+        },
+      );
+      return clubs;
     } catch (e) {
-      print('Error searching clubs: $e');
-      throw Exception('Failed to search clubs');
+      showAlert(context, 'Error', 'Failed to search clubs');
+      return []; // Return empty list on error
     }
   }
 }
