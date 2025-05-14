@@ -86,12 +86,10 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
     setState(() {
       _isLoadingClubs = true;
     });
-
     try {
       final user = Provider.of<UserProvider>(context, listen: false).user;
       final userClubs = await _clubService.getUserClubs(context, user.id);
       final allClubs = await _clubService.getAllClubs(context);
-      
       // Sort popular clubs by member count
       final popularClubs = List<Club>.from(allClubs)
         ..sort((a, b) => b.memberCount.compareTo(a.memberCount));
@@ -1106,6 +1104,8 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
           backgroundColor: Colors.red,
         ),
       );
+    }finally {
+      Navigator.pop(context); // Close the loading dialog
     }
   }
 }
