@@ -851,6 +851,7 @@ class ClubService {
       );
       return success;
     } catch (e) {
+      print(e.toString());
       showAlert(context, 'Error', 'Failed to join club');
       return false; // Return false on error
     }
