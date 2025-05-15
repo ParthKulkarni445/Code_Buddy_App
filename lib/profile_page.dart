@@ -118,7 +118,7 @@ Color getColorForRating(int rating) {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[400],
+      backgroundColor: Colors.grey[300],
       appBar: AppBar(
         centerTitle: true,
         elevation: 15,
@@ -194,18 +194,18 @@ Color getColorForRating(int rating) {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildProfileHeader(userData),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
                 _buildStatisticsCard(userData),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
                 _buildRatingCard(userData, ratingHistoryData),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
                 MomentumCard(
                   ratingHistory: ratingHistoryData,
                   submissions: submissionsData,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
                 _buildSubmissionCard(submissionsData),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
                 _buildContestHistoryCard(ratingHistoryData),
                 const SizedBox(height: 80),
               ],

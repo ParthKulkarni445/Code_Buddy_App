@@ -57,16 +57,31 @@ class Club {
   });
 
   factory Club.fromJson(Map<String, dynamic> json) {
+    DateTime parseCreatedAt(dynamic createdAt) {
+      if (createdAt == null) return DateTime.now();
+      if (createdAt is DateTime) return createdAt;
+      if (createdAt is Map<String, dynamic>) {
+        // Handle Firestore timestamp format
+        if (createdAt.containsKey('_seconds')) {
+          return DateTime.fromMillisecondsSinceEpoch(
+            createdAt['_seconds'] * 1000 + (createdAt['_nanoseconds'] ~/ 1000000)
+          );
+        }
+      }
+      // Try parsing string format as fallback
+      try {
+        return DateTime.parse(createdAt.toString());
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+
     return Club(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       description: json['description'] ?? '',
       createdBy: json['createdBy'] ?? '',
-      createdAt: json['createdAt'] != null 
-          ? (json['createdAt'] is DateTime 
-              ? json['createdAt'] 
-              : DateTime.parse(json['createdAt']))
-          : DateTime.now(),
+      createdAt: parseCreatedAt(json['createdAt']),
       bannerUrl: json['bannerUrl'],
       avatarUrl: json['avatarUrl'],
       members: List<String>.from(json['members'] ?? []),
@@ -117,6 +132,25 @@ class ClubDiscussion {
   });
 
   factory ClubDiscussion.fromJson(Map<String, dynamic> json) {
+    DateTime parseCreatedAt(dynamic createdAt) {
+      if (createdAt == null) return DateTime.now();
+      if (createdAt is DateTime) return createdAt;
+      if (createdAt is Map<String, dynamic>) {
+        // Handle Firestore timestamp format
+        if (createdAt.containsKey('_seconds')) {
+          return DateTime.fromMillisecondsSinceEpoch(
+            createdAt['_seconds'] * 1000 + (createdAt['_nanoseconds'] ~/ 1000000)
+          );
+        }
+      }
+      // Try parsing string format as fallback
+      try {
+        return DateTime.parse(createdAt.toString());
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+
     return ClubDiscussion(
       id: json['id'] ?? '',
       clubId: json['clubId'] ?? '',
@@ -124,11 +158,7 @@ class ClubDiscussion {
       content: json['content'] ?? '',
       authorId: json['authorId'] ?? '',
       authorName: json['authorName'] ?? '',
-      createdAt: json['createdAt'] != null 
-          ? (json['createdAt'] is DateTime 
-              ? json['createdAt'] 
-              : DateTime.parse(json['createdAt']))
-          : DateTime.now(),
+      createdAt: parseCreatedAt(json['createdAt']),
       commentCount: json['commentCount'] ?? 0,
       likeCount: json['likeCount'] ?? 0,
     );
@@ -173,6 +203,25 @@ class ClubProblem {
   });
 
   factory ClubProblem.fromJson(Map<String, dynamic> json) {
+    DateTime parseCreatedAt(dynamic createdAt) {
+      if (createdAt == null) return DateTime.now();
+      if (createdAt is DateTime) return createdAt;
+      if (createdAt is Map<String, dynamic>) {
+        // Handle Firestore timestamp format
+        if (createdAt.containsKey('_seconds')) {
+          return DateTime.fromMillisecondsSinceEpoch(
+            createdAt['_seconds'] * 1000 + (createdAt['_nanoseconds'] ~/ 1000000)
+          );
+        }
+      }
+      // Try parsing string format as fallback
+      try {
+        return DateTime.parse(createdAt.toString());
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+
     return ClubProblem(
       id: json['id'] ?? '',
       clubId: json['clubId'] ?? '',
@@ -181,11 +230,7 @@ class ClubProblem {
       difficulty: json['difficulty'] ?? 'medium',
       points: json['points'] ?? 100,
       authorId: json['authorId'] ?? '',
-      createdAt: json['createdAt'] != null 
-          ? (json['createdAt'] is DateTime 
-              ? json['createdAt'] 
-              : DateTime.parse(json['createdAt']))
-          : DateTime.now(),
+      createdAt: parseCreatedAt(json['createdAt']),
       solvedCount: json['solvedCount'] ?? 0,
     );
   }
@@ -226,7 +271,6 @@ class AuthService {
           'Content-Type': 'application/json; charset=UTF-8',
         },
       );
-
       httpErrorHandle(
         response: res,
         context: context,
@@ -272,9 +316,14 @@ class AuthService {
         context: context,
         onSuccess: () async {
           SharedPreferences prefs = await SharedPreferences.getInstance();
+          var userData = jsonDecode(res.body);
           userProvider.setUser(res.body);
-          print('This is the token: ${jsonDecode(res.body)['token']}');
-          await prefs.setString('x-auth-token', jsonDecode(res.body)['token']);
+          print('This is the token: ${userData['token']}');
+          await prefs.setString('x-auth-token', userData['token']);
+          // Update user ID in provider
+          if (userData['id'] != null) {
+            userProvider.user.id = userData['id'];
+          }
           navigator.pushAndRemoveUntil(
             MaterialPageRoute(
               builder: (context) => const LandingPage(),
@@ -284,6 +333,7 @@ class AuthService {
         },
       );
     } catch (e) {
+      print(e.toString());
       showAlert(context,'Error', "Some error occured, please try again later.");
     } finally {
       if (onSuccess != null) {
@@ -674,7 +724,6 @@ class ClubService {
           'isPublic': isPublic,
         }),
       );
-      print(response.body); 
       String clubId = '';
       httpErrorHandle(
         response: response,
@@ -728,7 +777,6 @@ class ClubService {
           'Content-Type': 'application/json; charset=UTF-8',
         },
       );
-      
       List<Club> clubs = [];
       httpErrorHandle(
         response: response,
@@ -741,7 +789,7 @@ class ClubService {
       );
       return clubs;
     } catch (e) {
-      showAlert(context, 'Error', 'Failed to get clubs');
+      showAlert(context, 'Error', e.toString());
       return []; // Return empty list on error
     }
   }
@@ -749,14 +797,17 @@ class ClubService {
   // Get clubs for a user
   Future<List<Club>> getUserClubs(BuildContext context, String userId) async {
     try {
+      var userProvider = Provider.of<UserProvider>(context, listen: false);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('x-auth-token');
       final response = await http.get(
         Uri.parse('${Constants.uri}/api/users/$userId/clubs'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': await SecureStorageService.readData('x-auth-token') ?? '',
+          'x-auth-token': token ?? '',
         },
       );
-      
+      print(response.body);
       List<Club> clubs = [];
       httpErrorHandle(
         response: response,
@@ -769,6 +820,7 @@ class ClubService {
       );
       return clubs;
     } catch (e) {
+      print(e.toString());
       showAlert(context, 'Error', 'Failed to get user clubs');
       return []; // Return empty list on error
     }
@@ -777,11 +829,14 @@ class ClubService {
   // Join a club
   Future<bool> joinClub(BuildContext context, String clubId) async {
     try {
+      var userProvider = Provider.of<UserProvider>(context, listen: false);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('x-auth-token');
       final response = await http.post(
         Uri.parse('${Constants.uri}/api/clubs/$clubId/join'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': await SecureStorageService.readData('x-auth-token') ?? '',
+          'x-auth-token': token ?? '',
         },
       );
       
@@ -804,11 +859,14 @@ class ClubService {
   // Leave a club
   Future<bool> leaveClub(BuildContext context, String clubId) async {
     try {
+      var userProvider = Provider.of<UserProvider>(context, listen: false);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('x-auth-token');
       final response = await http.post(
         Uri.parse('${Constants.uri}/api/clubs/$clubId/leave'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': await SecureStorageService.readData('x-auth-token') ?? '',
+          'x-auth-token': token ?? '',
         },
       );
       
@@ -837,11 +895,14 @@ class ClubService {
     required String authorName,
   }) async {
     try {
+      var userProvider = Provider.of<UserProvider>(context, listen: false);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('x-auth-token');
       final response = await http.post(
         Uri.parse('${Constants.uri}/api/clubs/$clubId/discussions'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': await SecureStorageService.readData('x-auth-token') ?? '',
+          'x-auth-token': token ?? '',
         },
         body: jsonEncode({
           'title': title,
@@ -903,11 +964,14 @@ class ClubService {
     required int points,
   }) async {
     try {
+      var userProvider = Provider.of<UserProvider>(context, listen: false);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('x-auth-token');
       final response = await http.post(
         Uri.parse('${Constants.uri}/api/clubs/$clubId/problems'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': await SecureStorageService.readData('x-auth-token') ?? '',
+          'x-auth-token': token ?? '',
         },
         body: jsonEncode({
           'title': title,

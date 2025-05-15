@@ -170,7 +170,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        backgroundColor: Colors.grey[100],
+        backgroundColor: Colors.grey[300],
         appBar: _buildAppBar(),
         body: const Center(child: LoadingCard(primaryColor: Colors.blue)),
       );
@@ -178,14 +178,14 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
 
     if (!hasCredentials) {
       return Scaffold(
-        backgroundColor: Colors.grey[100],
+        backgroundColor: Colors.grey[300],
         appBar: _buildAppBar(),
         body: _buildNoCredentialsMessage(),
       );
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[300],
       appBar: _buildAppBar(),
       body: Column(
         children: [
@@ -242,7 +242,6 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
           ),
         ],
       ),
-      floatingActionButton: _buildFloatingActionButton(),
     );
   }
 
@@ -523,6 +522,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   ),
                 ),
               ),
+              const SizedBox(height: 90),
             ],
           ),
         ),
@@ -618,7 +618,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
               Column(
                 children: _popularClubs.map((club) => _buildClubCard(club)).toList(),
               ),
-              const SizedBox(height: 60), // Space for FAB
+              const SizedBox(height: 80), // Space for FAB
             ],
           ),
         ),
@@ -652,6 +652,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
   Widget _buildEmptyClubsMessage() {
     return Card(
       elevation: 2,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -690,7 +691,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
               icon: const Icon(Icons.add),
               label: const Text('Create a Club'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
+                backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -710,6 +711,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
     
     return Card(
       elevation: 2,
+      color: Colors.white,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -944,39 +946,6 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildFloatingActionButton() {
-    return AnimatedBuilder(
-      animation: _tabController,
-      builder: (context, child) {
-        // Show different FAB based on selected tab
-        if (_tabController.index == 0) {
-          return FloatingActionButton(
-            onPressed: () {
-              // Add friend functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Add friend feature coming soon'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-            backgroundColor: Colors.blue,
-            child: const Icon(Icons.person_add, color: Colors.white),
-          );
-        } else {
-          return FloatingActionButton(
-            onPressed: () {
-              // Create club functionality
-              _showCreateClubDialog();
-            },
-            backgroundColor: Colors.purple,
-            child: const Icon(Icons.add, color: Colors.white),
-          );
-        }
-      },
-    );
-  }
-
   void _showCreateClubDialog() {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
@@ -1016,7 +985,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                     title: const Text('Public Club'),
                     subtitle: const Text('Anyone can join a public club'),
                     value: isPublic,
-                    activeColor: Colors.purple,
+                    activeColor: Colors.blue,
                     onChanged: (value) {
                       setState(() {
                         isPublic = value;
@@ -1051,7 +1020,7 @@ class _SocialPageState extends State<SocialPage> with SingleTickerProviderStateM
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
+                  backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Create'),
