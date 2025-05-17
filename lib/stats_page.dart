@@ -1026,7 +1026,7 @@ class _StatsPageState extends State<StatsPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.grey[400],
+        backgroundColor: Colors.grey[200],
         appBar: AppBar(
           centerTitle: true,
           elevation: 15,
@@ -1081,9 +1081,7 @@ class _StatsPageState extends State<StatsPage> {
           future: Future.wait([submissions, problems, contests]),
           builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: LoadingCard(primaryColor: Colors.purple),
-              );
+              return LoadingCard(primaryColor: Colors.purple);
             }
 
             if (snapshot.hasError) {

@@ -663,7 +663,7 @@ class ApiService {
     // Construct full URL with authentication
     final url = Uri.parse('$baseUrl$methodName?$paramString&apiSig=$apiSig');
     final response = await http.get(url);
-    print(response.body);
+    //print(response.body);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       if (data['status'] == 'OK') {
@@ -1060,7 +1060,7 @@ class ClubService {
           'Content-Type': 'application/json; charset=UTF-8',
         },
       );
-      
+      print(response.body);
       List<Club> clubs = [];
       httpErrorHandle(
         response: response,

@@ -141,235 +141,237 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
   Widget build(BuildContext context) {
     final Color clubColor = _getClubColor(widget.clubName);
     
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: isLoading
-          ? const Center(child: LoadingCard(primaryColor: Colors.purple))
-          : NestedScrollView(
-              headerSliverBuilder: (context, innerBoxIsScrolled) {
-                return [
-                  SliverAppBar(
-                    expandedHeight: 200.0,
-                    floating: false,
-                    pinned: true,
-                    backgroundColor: clubColor,
-                    flexibleSpace: FlexibleSpaceBar(
-                      title: Text(
-                        _club?.name ?? widget.clubName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          shadows: [
-                            Shadow(
-                              blurRadius: 4,
-                              color: Colors.black38,
-                              offset: Offset(0, 1),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.grey[200],
+        body: isLoading
+            ? LoadingCard(primaryColor: Colors.deepPurple)
+            : NestedScrollView(
+                headerSliverBuilder: (context, innerBoxIsScrolled) {
+                  return [
+                    SliverAppBar(
+                      expandedHeight: 200.0,
+                      floating: false,
+                      pinned: true,
+                      backgroundColor: clubColor,
+                      flexibleSpace: FlexibleSpaceBar(
+                        title: Text(
+                          _club?.name ?? widget.clubName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                blurRadius: 4,
+                                color: Colors.black38,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                        background: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            _club?.bannerUrl != null
+                                ? Image.network(
+                                    _club!.bannerUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              clubColor.withOpacity(0.7),
+                                              clubColor,
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          clubColor.withOpacity(0.7),
+                                          clubColor,
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.5),
+                                  ],
+                                ),
+                              ),
                             ),
+                            if (_club != null)
+                              Positioned(
+                                bottom: 60,
+                                left: 16,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.6),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.people,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${_club!.memberCount} members',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.6),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            _club!.isPublic ? Icons.public : Icons.lock,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            _club!.isPublic ? 'Public' : 'Private',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                       ),
-                      background: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          _club?.bannerUrl != null
-                              ? Image.network(
-                                  _club!.bannerUrl!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          colors: [
-                                            clubColor.withOpacity(0.7),
-                                            clubColor,
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                )
-                              : Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        clubColor.withOpacity(0.7),
-                                        clubColor,
-                                      ],
-                                    ),
-                                  ),
+                      actions: [
+                        if (_club != null && _isUserAdmin())
+                          IconButton(
+                            icon: const Icon(Icons.settings),
+                            color: Colors.white,
+                            onPressed: () {
+                              // Club settings
+                              _showClubSettingsDialog();
+                            },
+                          ),
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert, color: Colors.white),
+                          onSelected: (value) {
+                            if (value == 'leave' && _club != null) {
+                              _showLeaveClubDialog();
+                            } else if (value == 'share') {
+                              // Share club
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Share feature coming soon'),
                                 ),
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withOpacity(0.5),
-                                ],
-                              ),
-                            ),
-                          ),
-                          if (_club != null)
-                            Positioned(
-                              bottom: 60,
-                              left: 16,
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.6),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.people,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '${_club!.memberCount} members',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.6),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          _club!.isPublic ? Icons.public : Icons.lock,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _club!.isPublic ? 'Public' : 'Private',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    actions: [
-                      if (_club != null && _isUserAdmin())
-                        IconButton(
-                          icon: const Icon(Icons.settings),
-                          color: Colors.white,
-                          onPressed: () {
-                            // Club settings
-                            _showClubSettingsDialog();
+                              );
+                            } else if (value == 'report') {
+                              // Report club
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Report feature coming soon'),
+                                ),
+                              );
+                            }
                           },
-                        ),
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert, color: Colors.white),
-                        onSelected: (value) {
-                          if (value == 'leave' && _club != null) {
-                            _showLeaveClubDialog();
-                          } else if (value == 'share') {
-                            // Share club
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Share feature coming soon'),
+                          itemBuilder: (context) => [
+                            if (_club != null && _isUserMember() && !_isUserCreator())
+                              const PopupMenuItem(
+                                value: 'leave',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.exit_to_app, color: Colors.red),
+                                    SizedBox(width: 8),
+                                    Text('Leave Club', style: TextStyle(color: Colors.red)),
+                                  ],
+                                ),
                               ),
-                            );
-                          } else if (value == 'report') {
-                            // Report club
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Report feature coming soon'),
-                              ),
-                            );
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          if (_club != null && _isUserMember() && !_isUserCreator())
                             const PopupMenuItem(
-                              value: 'leave',
+                              value: 'share',
                               child: Row(
                                 children: [
-                                  Icon(Icons.exit_to_app, color: Colors.red),
+                                  Icon(Icons.share),
                                   SizedBox(width: 8),
-                                  Text('Leave Club', style: TextStyle(color: Colors.red)),
+                                  Text('Share'),
                                 ],
                               ),
                             ),
-                          const PopupMenuItem(
-                            value: 'share',
-                            child: Row(
-                              children: [
-                                Icon(Icons.share),
-                                SizedBox(width: 8),
-                                Text('Share'),
-                              ],
+                            const PopupMenuItem(
+                              value: 'report',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.flag),
+                                  SizedBox(width: 8),
+                                  Text('Report'),
+                                ],
+                              ),
                             ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'report',
-                            child: Row(
-                              children: [
-                                Icon(Icons.flag),
-                                SizedBox(width: 8),
-                                Text('Report'),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SliverPersistentHeader(
-                    delegate: _SliverAppBarDelegate(
-                      TabBar(
-                        controller: _tabController,
-                        indicatorColor: clubColor,
-                        labelColor: clubColor,
-                        unselectedLabelColor: Colors.grey,
-                        tabs: const [
-                          Tab(text: 'Discussions'),
-                          Tab(text: 'Problems'),
-                          Tab(text: 'Leaderboard'),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ),
-                    pinned: true,
-                  ),
-                ];
-              },
-              body: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildDiscussionsTab(),
-                  _buildProblemsTab(),
-                  _buildLeaderboardTab(),
-                ],
+                    SliverPersistentHeader(
+                      delegate: _SliverAppBarDelegate(
+                        TabBar(
+                          controller: _tabController,
+                          indicatorColor: clubColor,
+                          labelColor: clubColor,
+                          unselectedLabelColor: Colors.grey,
+                          tabs: const [
+                            Tab(text: 'Discussions'),
+                            Tab(text: 'Problems'),
+                            Tab(text: 'Leaderboard'),
+                          ],
+                        ),
+                      ),
+                      pinned: true,
+                    ),
+                  ];
+                },
+                body: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildDiscussionsTab(),
+                    _buildProblemsTab(),
+                    _buildLeaderboardTab(),
+                  ],
+                ),
               ),
-            ),
-      floatingActionButton: _buildFloatingActionButton(),
+        floatingActionButton: _buildFloatingActionButton(),
+      ),
     );
   }
 
@@ -580,21 +582,21 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.purple.withOpacity(0.1),
+                      color: Colors.deepPurple.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
                         const Icon(
                           Icons.star,
-                          color: Colors.purple,
+                          color: Colors.deepPurple,
                           size: 16,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '${problem.points} pts',
                           style: const TextStyle(
-                            color: Colors.purple,
+                            color: Colors.deepPurple,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -814,22 +816,174 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
   Widget _buildLoadingShimmer() {
     return Shimmer.fromColors(
       baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: 5,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Container(
-              height: 120,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
+      highlightColor: Colors.grey[50]!,
+      child: Column(
+        children: [
+          // Club info section
+          // Container(
+          //   color: Colors.white,
+          //   padding: const EdgeInsets.all(16),
+          //   child: Row(
+          //     children: [
+          //       // Club avatar placeholder
+          //       Container(
+          //         width: 60,
+          //         height: 60,
+          //         decoration: BoxDecoration(
+          //           color: Colors.white,
+          //           borderRadius: BorderRadius.circular(12),
+          //         ),
+          //       ),
+          //       const SizedBox(width: 16),
+          //       Expanded(
+          //         child: Column(
+          //           crossAxisAlignment: CrossAxisAlignment.start,
+          //           children: [
+          //             // Club name placeholder
+          //             Container(
+          //               width: 150,
+          //               height: 20,
+          //               decoration: BoxDecoration(
+          //                 color: Colors.white,
+          //                 borderRadius: BorderRadius.circular(4),
+          //               ),
+          //             ),
+          //             const SizedBox(height: 8),
+          //             // Club description placeholder
+          //             Container(
+          //               width: double.infinity,
+          //               height: 16,
+          //               decoration: BoxDecoration(
+          //                 color: Colors.white,
+          //                 borderRadius: BorderRadius.circular(4),
+          //               ),
+          //             ),
+          //           ],
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
+          // const SizedBox(height: 16),
+          // Content cards
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: 5,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        // Card header
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              // Avatar placeholder
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Title placeholder
+                                    Container(
+                                      width: 200,
+                                      height: 16,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Subtitle placeholder
+                                    Container(
+                                      width: 100,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Card content
+                        Container(
+                          height: 60,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                width: 200,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Card footer
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 60,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Container(
+                                width: 60,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -890,7 +1044,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
     switch (_tabController.index) {
       case 0: // Discussions tab
         return FloatingActionButton(
-          onPressed: (){},
+          onPressed: () => _showNewDiscussionDialog(),
           child: const Icon(Icons.add_comment),
           backgroundColor: _getClubColor(widget.clubName),
         );
@@ -1408,7 +1562,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
 
   Color _getClubColor(String clubName) {
     final List<Color> colors = [
-      Colors.purple,
+      Colors.deepPurple,
       Colors.blue,
       Colors.green,
       Colors.orange,

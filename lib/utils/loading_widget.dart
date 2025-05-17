@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
+import 'package:shimmer/shimmer.dart';
 
 class LoadingCard extends StatelessWidget {
   final Color primaryColor;
@@ -9,214 +9,650 @@ class LoadingCard extends StatelessWidget {
     required this.primaryColor,
   });
 
-  Color _getComplementaryColor() {
-    final HSLColor hsl = HSLColor.fromColor(primaryColor);
-
-    // Create harmonious colors using 60° and 120° shifts
-    final color1 = HSLColor.fromAHSL(
-      hsl.alpha,
-      (hsl.hue + 60) % 360,
-      hsl.saturation,
-      math.max(0.2, hsl.lightness * 0.7), // Ensure darker than primary
-    ).toColor();
-
-    final color2 = HSLColor.fromAHSL(
-      hsl.alpha,
-      (hsl.hue + 120) % 360,
-      math.min(1.0, hsl.saturation * 1.2), // Slightly more saturated
-      math.max(0.15, hsl.lightness * 0.6), // Even darker
-    ).toColor();
-
-    // Choose the color that provides better contrast
-    final primaryLuminance = primaryColor.computeLuminance();
-    final color1Contrast = (primaryLuminance - color1.computeLuminance()).abs();
-    final color2Contrast = (primaryLuminance - color2.computeLuminance()).abs();
-
-    return color1Contrast > color2Contrast ? color1 : color2;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final complementaryColor = _getComplementaryColor();
+    // Choose the appropriate shimmer layout based on the primary color
+    // which is unique for each page
+    if (primaryColor == Colors.blue) {
+      return _buildFriendsShimmer(); // Friends page
+    } else if (primaryColor == Colors.green) {
+      return _buildSubmissionsShimmer(); // Submissions page
+    } else if (primaryColor == Colors.deepPurple) {
+      return _buildClubShimmer(); // Club page
+    } else if (primaryColor == Colors.teal) {
+      return _buildProblemsShimmer(); // Problems page
+    } else if (primaryColor == Colors.red) {
+      return _buildProfileShimmer(); // Profile page
+    } else if (primaryColor == Colors.orange) {
+      return _buildContestShimmer(); // Contest page
+    } else if (primaryColor == Colors.yellow) {
+      return _buildContestsShimmer(); // Contests list page
+    } else if (primaryColor == Colors.purple) {
+      return _buildStatsShimmer(); // Stats page
+    } else {
+      return _buildDefaultShimmer(); // Default fallback
+    }
+  }
 
-    // List of witty quotes
-    final List<String> wittyQuotes = [
-      "Compiling creativity... Hold tight!",
-      "Great code takes time... and so does this progress bar.",
-      "Optimizing bugs... or just renaming them as features?",
-      "Searching for the semicolon you forgot...",
-      "Magic takes a moment... coding takes a bit longer.",
-      "Loading... because copy-pasting takes time!"
-    ];
-
-    // Pick a random quote
-    final String randomQuote = wittyQuotes[math.Random().nextInt(wittyQuotes.length)];
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Card(
-            elevation: 8,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+  Widget _buildFriendsShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[350]!,
+      highlightColor: Colors.grey[50]!,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Search bar
+            Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(25),
+              ),
             ),
-            color: Colors.white,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.9,
-                height: 550,
-                child: Stack(
-                  fit: StackFit.expand,
+            const SizedBox(height: 24),
+            // Friends list
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 8,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.only(bottom: 18),
+                child: Row(
                   children: [
-                    // Blurred Background
+                    // Avatar
                     Container(
+                      width: 60,
+                      height: 60,
                       decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.05),
+                        color: Colors.white,
+                        shape: BoxShape.rectangle,
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    // Content
-                    Padding(
-                      padding: const EdgeInsets.all(24.0),
+                    const SizedBox(width: 16),
+                    // Info
+                    Expanded(
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Animated coding person icon
-                          TweenAnimationBuilder(
-                            tween: Tween<double>(begin: 0, end: 2 * math.pi),
-                            duration: const Duration(seconds: 2),
-                            builder: (context, double value, child) {
-                              return Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  // Person Icon
-                                  Icon(
-                                    Icons.person,
-                                    size: 110,
-                                    color: primaryColor,
-                                  ),
-                                  // Animated Laptop
-                                  Transform.translate(
-                                    offset: Offset(
-                                        32 * math.cos(value),
-                                        32 * math.sin(value)
-                                    ),
-                                    child: Icon(
-                                      Icons.laptop_mac,
-                                      size: 70,
-                                      color: complementaryColor,
-                                    ),
-                                  ),
-                                  // Animated Code Symbol
-                                  Transform.translate(
-                                    offset: Offset(
-                                        -32 * math.sin(value),
-                                        -32 * math.cos(value)
-                                    ),
-                                    child: Icon(
-                                      Icons.code,
-                                      size: 55,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
+                          Container(
+                            width: 120,
+                            height: 16,
+                            color: Colors.white,
                           ),
-                          const SizedBox(height: 35),
-                          // Fun loading text with complementary gradient
-                          ShaderMask(
-                            shaderCallback: (bounds) => LinearGradient(
-                              colors: [primaryColor, complementaryColor],
-                            ).createShader(bounds),
-                            child: Text(
-                              randomQuote,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                height: 1.3,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          // Progress indicator with percentage
-                          TweenAnimationBuilder(
-                            tween: Tween<double>(begin: 0, end: 1),
-                            duration: const Duration(seconds: 2),
-                            builder: (context, double value, child) {
-                              return Column(
-                                children: [
-                                  ShaderMask(
-                                    shaderCallback: (bounds) => LinearGradient(
-                                      colors: [primaryColor, complementaryColor],
-                                    ).createShader(bounds),
-                                    child: LinearProgressIndicator(
-                                      value: value,
-                                      backgroundColor: primaryColor.withOpacity(0.1),
-                                      valueColor: const AlwaysStoppedAnimation<Color>(
-                                        Colors.white, // Use white as base color for shader
-                                      ),
-                                      minHeight: 8,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  // Percentage text with gradient too
-                                  ShaderMask(
-                                    shaderCallback: (bounds) => LinearGradient(
-                                      colors: [primaryColor, complementaryColor],
-                                    ).createShader(bounds),
-                                    child: Text(
-                                      "${(value * 100).toInt()}%",
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white, // Use white as base color for shader
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
+                          const SizedBox(height: 8),
+                          Container(
+                            width: 80,
+                            height: 12,
+                            color: Colors.white,
                           ),
                         ],
                       ),
                     ),
-                    // Decorative Elements
-                    Positioned(
-                      top: -20,
-                      right: -20,
-                      child: Transform.rotate(
-                        angle: math.pi / 6,
-                        child: Icon(
-                          Icons.terminal_rounded,
-                          size: 120,
-                          color: primaryColor.withOpacity(0.8),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -20,
-                      left: -20,
-                      child: Transform.rotate(
-                        angle: -math.pi / 4,
-                        child: Icon(
-                          Icons.keyboard_rounded,
-                          size: 120,
-                          color: primaryColor.withOpacity(0.8),
-                        ),
+                    // Rating
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmissionsShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[350]!,
+      highlightColor: Colors.grey[50]!,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Submission entries
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 10,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Container(
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      // Status indicator
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Problem details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: 16,
+                              color: Colors.white,
+                            ),
+                            Container(
+                              width: 100,
+                              height: 12,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClubShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[350]!,
+      highlightColor: Colors.grey[50]!,
+      child: Column(
+        children: [
+          // Club banner and info
+          Container(
+            height: 200,
+            color: Colors.white,
           ),
-          const SizedBox(height: 90),
+          // Tab bar
+          Container(
+            height: 50,
+            color: Colors.white,
+          ),
+          // Content area
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: 5,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Container(
+                    height: 160,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        // Header
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              // Avatar
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Title and subtitle
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 200,
+                                      height: 16,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      width: 100,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Content
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                width: 200,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Footer
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 60,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Container(
+                                width: 60,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatsShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[350]!,
+      highlightColor: Colors.grey[50]!,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Stats cards
+            Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Charts
+            Container(
+              height: 300,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Additional stats
+            Row(
+              children: List.generate(2, (index) => Expanded(
+                child: Container(
+                  height: 120,
+                  margin: EdgeInsets.only(right: index == 0 ? 8.0 : 0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProblemsShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[350]!,
+      highlightColor: Colors.grey[50]!,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            
+            // Problem list
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 10,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Container(
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[350]!,
+      highlightColor: Colors.grey[50]!,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Profile image placeholder
+            Container(
+              width: 140,
+              height: 140,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Profile text area placeholder
+            Container(
+              width: double.infinity,
+              height: 90,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Information Card
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Information rows
+                    ...List.generate(5, (index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            width: 80,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            width: 100,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Rating Card
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          width: 100,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          width: 60,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContestShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[350]!,
+      highlightColor: Colors.grey[50]!,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Contest info card
+            Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Problems list
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 5,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Container(
+                  height: 140,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Standings
+            Container(
+              height: 300,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContestsShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[350]!,
+      highlightColor: Colors.grey[50]!,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Calendar
+            Container(
+              height: 300,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Contest list
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 5,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.only(bottom: 15),
+                child: Container(
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDefaultShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[350]!,
+      highlightColor: Colors.grey[50]!,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: double.infinity,
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

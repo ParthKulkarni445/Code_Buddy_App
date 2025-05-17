@@ -70,7 +70,7 @@ class _ContestDetailsPageState extends State<ContestDetailsPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.grey[400],
+        backgroundColor: Colors.grey[200],
         appBar: AppBar(
           shadowColor: Colors.black,
           elevation: 15,
@@ -82,7 +82,7 @@ class _ContestDetailsPageState extends State<ContestDetailsPage> {
           future: Future.wait([contestDetails, userStandings, contestRatingChanges]),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: LoadingCard(primaryColor: Colors.orange));
+              return LoadingCard(primaryColor: Colors.orange);
             }
             if (snapshot.hasError || !snapshot.hasData) {
               return _buildErrorWidget();

@@ -156,7 +156,7 @@ class _FriendsPageState extends State<FriendsPage> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        backgroundColor: Colors.grey[400],
+        backgroundColor: Colors.grey[200],
         appBar: AppBar(
           centerTitle: true,
           elevation: 15,
@@ -216,7 +216,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
     if (!hasCredentials) {
       return Scaffold(
-        backgroundColor: Colors.grey[400],
+        backgroundColor: Colors.grey[200],
         appBar: AppBar(
           centerTitle: true,
           elevation: 15,
@@ -276,7 +276,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.grey[400],
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
         centerTitle: true,
         elevation: 15,

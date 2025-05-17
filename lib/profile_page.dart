@@ -118,7 +118,7 @@ Color getColorForRating(int rating) {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
         centerTitle: true,
         elevation: 15,
@@ -173,7 +173,7 @@ Color getColorForRating(int rating) {
       future: Future.wait([userInfo, ratingHistory, submissions]),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: LoadingCard(primaryColor: Colors.red),
+          return const LoadingCard(primaryColor: Colors.red,
           );
         }
         if (snapshot.hasError || !snapshot.hasData) {

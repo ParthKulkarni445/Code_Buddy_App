@@ -50,7 +50,7 @@ class _SubmissionsPageState extends State<SubmissionsPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.grey[400],
+        backgroundColor: Colors.grey[200],
         appBar: AppBar(
           centerTitle: true,
           elevation: 15,
@@ -110,9 +110,7 @@ class _SubmissionsPageState extends State<SubmissionsPage> {
           future: Future.wait([submissions, problems]),
           builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: LoadingCard(primaryColor: Colors.green,),
-              );
+              return LoadingCard(primaryColor: Colors.green,);
             }
             if (snapshot.hasError || snapshot.data == null) {
               return _buildErrorWidget();

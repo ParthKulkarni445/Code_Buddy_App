@@ -183,6 +183,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: Colors.grey[200],
         appBar: AppBar(
           foregroundColor: Colors.white,
           backgroundColor: Colors.cyan[900],
@@ -192,7 +193,6 @@ class _SettingsPageState extends State<SettingsPage> {
           title: const Text('Settings', style: TextStyle(color: Colors.white)),
           centerTitle: true,
         ),
-        backgroundColor: Colors.grey[400],
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
