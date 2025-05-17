@@ -1060,6 +1060,7 @@ class ClubService {
           'Content-Type': 'application/json; charset=UTF-8',
         },
       );
+      print(Uri.parse('${Constants.uri}/api/clubs/search?query=$query'));
       print(response.body);
       List<Club> clubs = [];
       httpErrorHandle(
