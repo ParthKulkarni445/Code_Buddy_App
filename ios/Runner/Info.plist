@@ -47,5 +47,9 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app needs access to your photo library to select banner images for clubs.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>This app needs access to your camera to take photos for club banners.</string>
 	</dict>
 </plist>

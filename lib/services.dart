@@ -38,6 +38,7 @@ class Club {
   final String? bannerUrl;
   final String? avatarUrl;
   final List<String> members;
+  final List<String> memberHandles;
   final List<String> admins;
   final int memberCount;
   final bool isPublic;
@@ -51,6 +52,7 @@ class Club {
     this.bannerUrl,
     this.avatarUrl,
     required this.members,
+    required this.memberHandles,
     required this.admins,
     required this.memberCount,
     required this.isPublic,
@@ -85,6 +87,7 @@ class Club {
       bannerUrl: json['bannerUrl'],
       avatarUrl: json['avatarUrl'],
       members: List<String>.from(json['members'] ?? []),
+      memberHandles: List<String>.from(json['memberHandles'] ?? []),
       admins: List<String>.from(json['admins'] ?? []),
       memberCount: json['memberCount'] ?? 0,
       isPublic: json['isPublic'] ?? true,
@@ -101,6 +104,7 @@ class Club {
       'bannerUrl': bannerUrl,
       'avatarUrl': avatarUrl,
       'members': members,
+      'memberHandles': memberHandles,
       'admins': admins,
       'memberCount': memberCount,
       'isPublic': isPublic,
@@ -681,7 +685,7 @@ class ApiService {
     String friends = friendList.join(';');
     final response = await http.get(Uri.parse(
         'https://codeforces.com/api/user.info?handles=$handle;$friends'));
-    //print(response.body);
+    print(response.body);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       if (data['status'] == 'OK') {
@@ -697,6 +701,7 @@ class ApiService {
 
 class ClubService {
   // Create a new club
+  
   Future<String> createClub({
     required BuildContext context,
     required String name,
@@ -724,21 +729,19 @@ class ClubService {
           'isPublic': isPublic,
         }),
       );
-      String clubId = '';
-      httpErrorHandle(
-        response: response,
-        context: context,
-        onSuccess: () {
-          final data = jsonDecode(response.body);
-          clubId = data['clubId'];
-          showAlert(context, 'Success', 'Club created successfully with ID: $clubId');
-        },
-      );
-      return clubId;
+
+      if (response.statusCode != 200) {
+        throw Exception(jsonDecode(response.body)['msg'] ?? 'Failed to create club');
+      }
+
+      final data = jsonDecode(response.body);
+      if (!data['success']) {
+        throw Exception(data['msg'] ?? 'Failed to create club');
+      }
+
+      return data['clubId'] ?? '';
     } catch (e) {
-      print(e.toString());
-      showAlert(context, 'Error', 'Failed to create club');
-      return '';
+      throw Exception(e.toString());
     }
   }
   
@@ -807,7 +810,6 @@ class ClubService {
           'x-auth-token': token ?? '',
         },
       );
-      print(response.body);
       List<Club> clubs = [];
       httpErrorHandle(
         response: response,
@@ -1028,24 +1030,73 @@ class ClubService {
   // Get club leaderboard
   Future<List<Map<String, dynamic>>> getClubLeaderboard(BuildContext context, String clubId) async {
     try {
+      // First get the club to access member handles
+      final club = await getClubById(context, clubId);
+      if (club == null) {
+        throw Exception('Club not found');
+      }
+
+      // Get user info for all members
       final response = await http.get(
-        Uri.parse('${Constants.uri}/api/clubs/$clubId/leaderboard'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
+        Uri.parse('https://codeforces.com/api/user.info?handles=${club.members.join(";")}'),
       );
-      
-      List<Map<String, dynamic>> leaderboard = [];
-      httpErrorHandle(
-        response: response,
-        context: context,
-        onSuccess: () {
-          final data = jsonDecode(response.body);
-          leaderboard = List<Map<String, dynamic>>.from(data['leaderboard']);
-        },
-      );
+      print(Uri.parse('https://codeforces.com/api/user.info?handles=${club.members.join(";")}'));
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to fetch user data from Codeforces');
+      }
+
+      final data = jsonDecode(response.body);
+      if (data['status'] != 'OK') {
+        throw Exception(data['comment'] ?? 'Failed to fetch user data from Codeforces');
+      }
+
+      // Transform the data into leaderboard format
+      final List<Map<String, dynamic>> leaderboard = data['result'].map<Map<String, dynamic>>((user) {
+        return {
+          'userId': user['handle'], // Using handle as userId since we don't have backend IDs
+          'username': user['handle'],
+          'rating': user['rating'] ?? 0,
+          'maxRating': user['maxRating'] ?? 0,
+          'rank': user['rank'] ?? 'unrated',
+          'contribution': user['contribution'] ?? 0,
+          'problemsSolved': 0, // Will be updated from user.status
+          'points': user['rating'] ?? 0, // Using rating as points for now
+        };
+      }).toList();
+
+      // Sort leaderboard by rating (points)
+      leaderboard.sort((a, b) => (b['points'] as int).compareTo(a['points'] as int));
+
+      // Get solved problems count for each user
+      for (var entry in leaderboard) {
+        try {
+          final statusResponse = await http.get(
+            Uri.parse('https://codeforces.com/api/user.status?handle=${entry['username']}&from=1'),
+          );
+
+          if (statusResponse.statusCode == 200) {
+            final statusData = jsonDecode(statusResponse.body);
+            if (statusData['status'] == 'OK') {
+              // Count unique solved problems
+              final solvedProblems = <String>{};
+              for (var submission in statusData['result']) {
+                if (submission['verdict'] == 'OK') {
+                  final problem = submission['problem'];
+                  solvedProblems.add('${problem['contestId']}_${problem['index']}');
+                }
+              }
+              entry['problemsSolved'] = solvedProblems.length;
+            }
+          }
+        } catch (e) {
+          print('Error fetching solved problems for ${entry['username']}: $e');
+        }
+      }
+
       return leaderboard;
     } catch (e) {
+      print('Error building leaderboard: $e');
       showAlert(context, 'Error', 'Failed to get leaderboard');
       return []; // Return empty list on error
     }

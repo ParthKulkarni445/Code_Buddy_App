@@ -1,4 +1,5 @@
-import 'dart:math';
+import 'dart:io';
+
 
 import 'package:acex/club_page.dart';
 import 'package:acex/friends_landpage.dart';
@@ -11,6 +12,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:acex/providers/user_provider.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class SocialPage extends StatefulWidget {
   const SocialPage({super.key});
@@ -369,34 +372,62 @@ Future<void> _searchClubs(String query) async {
 
   Widget _buildEmptyFriendsState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.people_outline, size: 150, color: Colors.blue),
-          const SizedBox(height: 18),
-          Text(
-            'No friends found for $_handle',
-            style: const TextStyle(
-              fontSize: 22,
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.people_outline,
+              size: 100,
+              color: Colors.blue,
             ),
-          ),
-          const SizedBox(height: 18),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {});
-            },
-            style: ElevatedButton.styleFrom(
-              elevation: 6,
-              backgroundColor: Colors.blue,
+            const SizedBox(height: 18),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                'No friends found for $_handle',
+                style: const TextStyle(
+                  fontSize: 22,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
-            child: const Text(
-              'Retry',
-              style: TextStyle(color: Colors.black),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                'Add friends on Codeforces to see them here',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {});
+              },
+              style: ElevatedButton.styleFrom(
+                elevation: 6,
+                backgroundColor: Colors.blue,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text(
+                'Retry',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -404,26 +435,44 @@ Future<void> _searchClubs(String query) async {
 // No search results state
   Widget _buildNoSearchResults(String searchQuery) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: 64),
-          Icon(
-            Icons.search_off,
-            size: 64,
-            color: Colors.grey[700],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No friends found matching "$searchQuery"',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[700],
-              fontWeight: FontWeight.w500,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: 100,
+              color: Colors.blue,
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 18),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                'No friends found matching "$searchQuery"',
+                style: const TextStyle(
+                  fontSize: 22,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                'Try a different search term or add friends on Codeforces',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -500,6 +549,7 @@ Future<void> _searchClubs(String query) async {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
+            if(handle == _handle)return;
             FocusManager.instance.primaryFocus?.unfocus();
 
             Future.delayed(const Duration(milliseconds: 100), () {
@@ -748,53 +798,44 @@ Future<void> _searchClubs(String query) async {
 
                 // Show search results
                 if (_searchResults.isEmpty) {
-                  return SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Center(
+                  return Center(
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const SizedBox(height: 64),
                           Icon(
                             Icons.search_off,
                             size: 100,
                             color: Colors.blue,
                           ),
                           const SizedBox(height: 18),
-                          Text(
-                            'No clubs found matching "$searchQuery"',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Text(
+                              'No clubs found matching "$searchQuery"',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            'Try a different search term or browse popular clubs',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 18),
-                          ElevatedButton(
-                            onPressed: () {
-                              _clubsSearchController.clear();
-                              _clubsSearchQueryNotifier.value = '';
-                              _searchClubs('');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              elevation: 6,
-                              backgroundColor: Colors.blue,
-                            ),
-                            child: const Text(
-                              'Clear Search',
-                              style: TextStyle(color: Colors.black),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32),
+                            child: Text(
+                              'Try a different search term or browse popular clubs',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
+                          const SizedBox(height: 32),
                         ],
                       ),
                     ),
@@ -1060,10 +1101,11 @@ Widget _buildClubCard(Club club, {bool showJoinedTag = true}) {
                           club.name,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 18, // Larger font
+                            fontSize: 18,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.left,
                         ),
                       ),
                       if (isUserMember && showJoinedTag)
@@ -1232,83 +1274,232 @@ Widget _buildClubCard(Club club, {bool showJoinedTag = true}) {
   void _showCreateClubDialog() {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
+    String? bannerUrl;
     bool isPublic = true;
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
-            title: const Text(''),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Club Name',
-                      border: OutlineInputBorder(),
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Icon(Icons.group_add, size: 28, color: Colors.blue),
+                        SizedBox(width: 12),
+                        Text(
+                          'Create New Club',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.left,
+                        ),
+                      ],
                     ),
-                    maxLength: 50,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Description',
-                      border: OutlineInputBorder(),
-                      alignLabelWithHint: true,
+                    const SizedBox(height: 24),
+
+                    // Banner Image Upload
+                    GestureDetector(
+                      onTap: () async {
+                        final ImagePicker picker = ImagePicker();
+                        final XFile? image = await picker.pickImage(
+                          source: ImageSource.gallery,
+                          maxWidth: 1920,
+                          maxHeight: 1080,
+                          imageQuality: 85,
+                        );
+
+                        if (image != null) {
+                          // Here you would typically upload the image to your storage service
+                          // and get back a URL. For now, we'll just store the local path
+                          setState(() {
+                            bannerUrl = image.path;
+                          });
+                        }
+                      },
+                      child: Container(
+                        height: 150,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[400]!),
+                        ),
+                        child: bannerUrl != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.file(
+                                  File(bannerUrl!),
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_photo_alternate_outlined,
+                                    size: 40,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Add Banner Image',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
                     ),
-                    maxLines: 3,
-                    maxLength: 200,
-                  ),
-                  const SizedBox(height: 16),
-                  SwitchListTile(
-                    title: const Text('Public Club'),
-                    subtitle: const Text('Anyone can join a public club'),
-                    value: isPublic,
-                    activeColor: Colors.blue,
-                    onChanged: (value) {
-                      setState(() {
-                        isPublic = value;
-                      });
-                    },
-                  ),
-                ],
+                    const SizedBox(height: 20),
+
+                    // Club Name Field
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Club Name',
+                        hintText: 'Enter club name',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.group),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                      ),
+                      maxLength: 50,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Description Field
+                    TextField(
+                      controller: descriptionController,
+                      decoration: InputDecoration(
+                        labelText: 'Description',
+                        hintText: 'Enter club description',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.description),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                      ),
+                      maxLines: 3,
+                      maxLength: 200,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Privacy Setting
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: SwitchListTile(
+                        title: const Text(
+                          'Public Club',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          'Anyone can join a public club',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        value: isPublic,
+                        activeColor: Colors.blue,
+                        onChanged: (value) {
+                          setState(() {
+                            isPublic = value;
+                          });
+                        },
+                        secondary: Icon(
+                          isPublic ? Icons.public : Icons.lock,
+                          color: isPublic ? Colors.blue : Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Action Buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (nameController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Please enter a club name'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+
+                            Navigator.pop(context);
+                            _createClub(
+                              nameController.text.trim(),
+                              descriptionController.text.trim(),
+                              isPublic,
+                              bannerUrl,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.add),
+                              SizedBox(width: 8),
+                              Text(
+                                'Create Club',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (nameController.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enter a club name'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
-                  Navigator.pop(context);
-                  _createClub(
-                    nameController.text.trim(),
-                    descriptionController.text.trim(),
-                    isPublic,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Create'),
-              ),
-            ],
           );
         },
       ),
@@ -1316,49 +1507,74 @@ Widget _buildClubCard(Club club, {bool showJoinedTag = true}) {
   }
 
   Future<void> _createClub(
-      String name, String description, bool isPublic) async {
+    String name,
+    String description,
+    bool isPublic,
+    [String? bannerUrl]
+  ) async {
+    final BuildContext dialogContext = context;
+    
     try {
-      final user = Provider.of<UserProvider>(context, listen: false).user;
-
       // Show loading indicator
       showDialog(
-        context: context,
+        context: dialogContext,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
+        builder: (BuildContext context) => WillPopScope(
+          onWillPop: () async => false,
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
         ),
       );
 
+      String? uploadedBannerUrl;
+      if (bannerUrl != null) {
+        // Upload the image to Firebase Storage
+        final file = File(bannerUrl);
+        final fileName = 'club_banners/${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+        final ref = FirebaseStorage.instance.ref().child(fileName);
+        final uploadTask = ref.putFile(file);
+        final snapshot = await uploadTask.whenComplete(() {});
+        uploadedBannerUrl = await snapshot.ref.getDownloadURL();
+      }
+
       await _clubService.createClub(
-        context: context,
+        context: dialogContext,
         name: name,
         description: description,
         isPublic: isPublic,
+        bannerUrl: uploadedBannerUrl,
       );
 
       // Hide loading indicator
-      Navigator.pop(context);
+      if (dialogContext.mounted) {
+        Navigator.of(dialogContext).pop();
+      }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Club created successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (dialogContext.mounted) {
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          const SnackBar(
+            content: Text('Club created successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
 
-      _fetchClubs();
+      await _fetchClubs(); // Refresh the clubs list
     } catch (e) {
       // Hide loading indicator
-      Navigator.pop(context);
+      if (dialogContext.mounted) {
+        Navigator.of(dialogContext).pop();
+      }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to create club: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      Navigator.pop(context); // Close the loading dialog
+      if (dialogContext.mounted) {
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create club: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

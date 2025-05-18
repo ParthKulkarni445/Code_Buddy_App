@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:acex/providers/user_provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
+import 'dart:io';
 
 class ClubDetailPage extends StatefulWidget {
   final String clubId;
@@ -139,8 +140,6 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    final Color clubColor = _getClubColor(widget.clubName);
-    
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.grey[200],
@@ -153,8 +152,10 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                       expandedHeight: 200.0,
                       floating: false,
                       pinned: true,
-                      backgroundColor: clubColor,
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.deepPurple,
                       flexibleSpace: FlexibleSpaceBar(
+                        titlePadding: const EdgeInsets.only(left: 50, bottom: 14),
                         title: Text(
                           _club?.name ?? widget.clubName,
                           style: const TextStyle(
@@ -168,28 +169,54 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                               ),
                             ],
                           ),
+                          textAlign: TextAlign.left,
                         ),
                         background: Stack(
                           fit: StackFit.expand,
                           children: [
                             _club?.bannerUrl != null
-                                ? Image.network(
-                                    _club!.bannerUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                            colors: [
-                                              clubColor.withOpacity(0.7),
-                                              clubColor,
-                                            ],
+                                ? ClipRRect(
+                                    child: _club!.bannerUrl!.startsWith('http')
+                                        ? Image.network(
+                                            _club!.bannerUrl!,
+                                            fit: BoxFit.cover,
+                                            width: double.infinity,
+                                            height: double.infinity,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    begin: Alignment.topCenter,
+                                                    end: Alignment.bottomCenter,
+                                                    colors: [
+                                                      Colors.deepPurple.withOpacity(0.7),
+                                                      Colors.deepPurple,
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          )
+                                        : Image.file(
+                                            File(_club!.bannerUrl!),
+                                            fit: BoxFit.cover,
+                                            width: double.infinity,
+                                            height: double.infinity,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    begin: Alignment.topCenter,
+                                                    end: Alignment.bottomCenter,
+                                                    colors: [
+                                                      Colors.deepPurple.withOpacity(0.7),
+                                                      Colors.deepPurple,
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                           ),
-                                        ),
-                                      );
-                                    },
                                   )
                                 : Container(
                                     decoration: BoxDecoration(
@@ -197,8 +224,8 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                                         begin: Alignment.topCenter,
                                         end: Alignment.bottomCenter,
                                         colors: [
-                                          clubColor.withOpacity(0.7),
-                                          clubColor,
+                                          Colors.deepPurple.withOpacity(0.7),
+                                          Colors.deepPurple,
                                         ],
                                       ),
                                     ),
@@ -217,8 +244,8 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                             ),
                             if (_club != null)
                               Positioned(
-                                bottom: 60,
-                                left: 16,
+                                top: 16,
+                                left: 50,
                                 child: Row(
                                   children: [
                                     Container(
@@ -347,13 +374,13 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                       delegate: _SliverAppBarDelegate(
                         TabBar(
                           controller: _tabController,
-                          indicatorColor: clubColor,
-                          labelColor: clubColor,
+                          indicatorColor: Colors.deepPurple,
+                          labelColor: Colors.deepPurple,
                           unselectedLabelColor: Colors.grey,
                           tabs: const [
+                            Tab(text: 'Leaderboard'),
                             Tab(text: 'Discussions'),
                             Tab(text: 'Problems'),
-                            Tab(text: 'Leaderboard'),
                           ],
                         ),
                       ),
@@ -364,9 +391,9 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                 body: TabBarView(
                   controller: _tabController,
                   children: [
+                    _buildLeaderboardTab(),
                     _buildDiscussionsTab(),
                     _buildProblemsTab(),
-                    _buildLeaderboardTab(),
                   ],
                 ),
               ),
@@ -402,7 +429,6 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
   }
 
   Widget _buildDiscussionCard(ClubDiscussion discussion) {
-    final Color clubColor = _getClubColor(widget.clubName);
     final formattedDate = DateFormat.yMMMd().format(discussion.createdAt);
     
     return Card(
@@ -429,12 +455,12 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: clubColor.withOpacity(0.2),
+                    backgroundColor: Colors.deepPurple.withOpacity(0.2),
                     radius: 20,
                     child: Text(
                       discussion.authorName.substring(0, min(2, discussion.authorName.length)).toUpperCase(),
                       style: TextStyle(
-                        color: clubColor,
+                        color: Colors.deepPurple,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -726,11 +752,10 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
               itemBuilder: (context, index) {
                 final entry = _leaderboard[index];
                 final isCurrentUser = entry['userId'] == userId;
-                final clubColor = _getClubColor(widget.clubName);
                 
                 return Container(
                   color: isCurrentUser 
-                      ? clubColor.withOpacity(0.1) 
+                      ? Colors.deepPurple.withOpacity(0.1) 
                       : (index % 2 == 0 ? Colors.grey[100] : Colors.white),
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   child: Row(
@@ -741,7 +766,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                           '${index + 1}',
                           style: TextStyle(
                             fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
-                            color: index < 3 ? clubColor : null,
+                            color: index < 3 ? Colors.deepPurple : null,
                           ),
                         ),
                       ),
@@ -751,12 +776,12 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                           children: [
                             CircleAvatar(
                               radius: 14,
-                              backgroundColor: clubColor.withOpacity(0.2),
+                              backgroundColor: Colors.deepPurple.withOpacity(0.2),
                               child: Text(
                                 entry['username'].substring(0, min(1, entry['username'].length)).toUpperCase(),
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: clubColor,
+                                  color: Colors.deepPurple,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -775,7 +800,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                                   '(You)',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: clubColor,
+                                    color: Colors.deepPurple,
                                   ),
                                 ),
                               ),
@@ -993,8 +1018,6 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
     required String title,
     required String message,
   }) {
-    final Color clubColor = _getClubColor(widget.clubName);
-    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -1004,7 +1027,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
             Icon(
               icon,
               size: 64,
-              color: clubColor.withOpacity(0.5),
+              color: Colors.deepPurple.withOpacity(0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -1042,18 +1065,18 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
     
     // Show different FAB based on current tab
     switch (_tabController.index) {
-      case 0: // Discussions tab
+      case 1: // Discussions tab
         return FloatingActionButton(
           onPressed: () => _showNewDiscussionDialog(),
           child: const Icon(Icons.add_comment),
-          backgroundColor: _getClubColor(widget.clubName),
+          backgroundColor: Colors.deepPurple,
         );
-      case 1: // Problems tab
+      case 2: // Problems tab
         if (_isUserAdmin()) {
           return FloatingActionButton(
             onPressed: () => _showAddProblemDialog(),
             child: const Icon(Icons.add),
-            backgroundColor: _getClubColor(widget.clubName),
+            backgroundColor: Colors.deepPurple,
           );
         }
         break;
@@ -1074,7 +1097,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
       onPressed: _joinClub,
       icon: const Icon(Icons.person_add),
       label: const Text('Join Club'),
-      backgroundColor: _getClubColor(widget.clubName),
+      backgroundColor: Colors.deepPurple,
     );
   }
 
@@ -1136,7 +1159,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: _getClubColor(widget.clubName),
+              backgroundColor: Colors.deepPurple,
               foregroundColor: Colors.white,
             ),
             child: const Text('Post'),
@@ -1262,7 +1285,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                           max: 300,
                           divisions: 29,
                           label: points.toString(),
-                          activeColor: _getClubColor(widget.clubName),
+                          activeColor: Colors.deepPurple,
                           onChanged: (value) {
                             setState(() {
                               points = value.toInt();
@@ -1318,7 +1341,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _getClubColor(widget.clubName),
+                  backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Add'),
@@ -1417,7 +1440,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                     title: const Text('Public Club'),
                     subtitle: const Text('Anyone can join a public club'),
                     value: isPublic,
-                    activeColor: _getClubColor(widget.clubName),
+                    activeColor: Colors.deepPurple,
                     onChanged: (value) {
                       setState(() {
                         isPublic = value;
@@ -1454,7 +1477,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _getClubColor(widget.clubName),
+                  backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Save'),
@@ -1558,22 +1581,6 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
     
     final userId = Provider.of<UserProvider>(context, listen: false).user.id;
     return _club!.createdBy == userId;
-  }
-
-  Color _getClubColor(String clubName) {
-    final List<Color> colors = [
-      Colors.deepPurple,
-      Colors.blue,
-      Colors.green,
-      Colors.orange,
-      Colors.red,
-      Colors.teal,
-      Colors.indigo,
-    ];
-    
-    // Use hash of club name to determine color
-    final int hash = clubName.hashCode.abs();
-    return colors[hash % colors.length];
   }
 
   Color _getDifficultyColor(String difficulty) {
