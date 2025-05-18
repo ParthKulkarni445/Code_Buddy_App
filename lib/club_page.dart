@@ -1,3 +1,4 @@
+import 'package:acex/friends_landpage.dart';
 import 'package:flutter/material.dart';
 import 'package:acex/services.dart';
 import 'package:acex/utils/loading_widget.dart';
@@ -10,7 +11,7 @@ import 'dart:io';
 class ClubDetailPage extends StatefulWidget {
   final String clubId;
   final String clubName;
-  
+
   const ClubDetailPage({
     super.key,
     required this.clubId,
@@ -21,7 +22,8 @@ class ClubDetailPage extends StatefulWidget {
   State<ClubDetailPage> createState() => _ClubDetailPageState();
 }
 
-class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProviderStateMixin {
+class _ClubDetailPageState extends State<ClubDetailPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool isLoading = true;
   final ClubService _clubService = ClubService();
@@ -32,27 +34,40 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
   bool _isLoadingDiscussions = true;
   bool _isLoadingProblems = true;
   bool _isLoadingLeaderboard = true;
-  
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _fetchClubDetails();
   }
-  
+
+  Color getColorForRating(int? rating) {
+    if (rating == null || rating <= 1199) return Colors.grey;
+    if (rating <= 1399) return Colors.green;
+    if (rating <= 1599) return Colors.cyan;
+    if (rating <= 1899) return const Color.fromARGB(255, 11, 35, 243);
+    if (rating <= 2099) return Colors.purple;
+    if (rating <= 2299) return Colors.orange;
+    if (rating <= 2399) return Colors.orangeAccent;
+    if (rating <= 2599) return Colors.red;
+    if (rating <= 2899) return Colors.redAccent;
+    return const Color.fromARGB(255, 128, 0, 0); // Dark Red
+  }
+
   Future<void> _fetchClubDetails() async {
     setState(() {
       isLoading = true;
     });
-    
+
     try {
       final club = await _clubService.getClubById(context, widget.clubId);
-      
+
       setState(() {
         _club = club;
         isLoading = false;
       });
-      
+
       // Fetch tab data
       _fetchDiscussions();
       _fetchProblems();
@@ -62,7 +77,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
       setState(() {
         isLoading = false;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to load club details: ${e.toString()}'),
@@ -71,15 +86,16 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
       );
     }
   }
-  
+
   Future<void> _fetchDiscussions() async {
     setState(() {
       _isLoadingDiscussions = true;
     });
-    
+
     try {
-      final discussions = await _clubService.getClubDiscussions(context, widget.clubId);
-      
+      final discussions =
+          await _clubService.getClubDiscussions(context, widget.clubId);
+
       setState(() {
         _discussions = discussions;
         _isLoadingDiscussions = false;
@@ -91,15 +107,16 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
       });
     }
   }
-  
+
   Future<void> _fetchProblems() async {
     setState(() {
       _isLoadingProblems = true;
     });
-    
+
     try {
-      final problems = await _clubService.getClubProblems(context, widget.clubId);
-      
+      final problems =
+          await _clubService.getClubProblems(context, widget.clubId);
+
       setState(() {
         _problems = problems;
         _isLoadingProblems = false;
@@ -111,15 +128,16 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
       });
     }
   }
-  
+
   Future<void> _fetchLeaderboard() async {
     setState(() {
       _isLoadingLeaderboard = true;
     });
-    
+
     try {
-      final leaderboard = await _clubService.getClubLeaderboard(context, widget.clubId);
-      
+      final leaderboard =
+          await _clubService.getClubLeaderboard(context, widget.clubId);
+
       setState(() {
         _leaderboard = leaderboard;
         _isLoadingLeaderboard = false;
@@ -131,7 +149,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
       });
     }
   }
-  
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -155,7 +173,8 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                       foregroundColor: Colors.white,
                       backgroundColor: Colors.deepPurple,
                       flexibleSpace: FlexibleSpaceBar(
-                        titlePadding: const EdgeInsets.only(left: 50, bottom: 14),
+                        titlePadding:
+                            const EdgeInsets.only(left: 50, bottom: 14),
                         title: Text(
                           _club?.name ?? widget.clubName,
                           style: const TextStyle(
@@ -182,14 +201,16 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                                             fit: BoxFit.cover,
                                             width: double.infinity,
                                             height: double.infinity,
-                                            errorBuilder: (context, error, stackTrace) {
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
                                               return Container(
                                                 decoration: BoxDecoration(
                                                   gradient: LinearGradient(
                                                     begin: Alignment.topCenter,
                                                     end: Alignment.bottomCenter,
                                                     colors: [
-                                                      Colors.deepPurple.withOpacity(0.7),
+                                                      Colors.deepPurple
+                                                          .withOpacity(0.7),
                                                       Colors.deepPurple,
                                                     ],
                                                   ),
@@ -202,14 +223,16 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                                             fit: BoxFit.cover,
                                             width: double.infinity,
                                             height: double.infinity,
-                                            errorBuilder: (context, error, stackTrace) {
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
                                               return Container(
                                                 decoration: BoxDecoration(
                                                   gradient: LinearGradient(
                                                     begin: Alignment.topCenter,
                                                     end: Alignment.bottomCenter,
                                                     colors: [
-                                                      Colors.deepPurple.withOpacity(0.7),
+                                                      Colors.deepPurple
+                                                          .withOpacity(0.7),
                                                       Colors.deepPurple,
                                                     ],
                                                   ),
@@ -249,7 +272,8 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                                 child: Row(
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
                                         color: Colors.black.withOpacity(0.6),
                                         borderRadius: BorderRadius.circular(12),
@@ -274,7 +298,8 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                                     ),
                                     const SizedBox(width: 8),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
                                         color: Colors.black.withOpacity(0.6),
                                         borderRadius: BorderRadius.circular(12),
@@ -282,13 +307,17 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                                       child: Row(
                                         children: [
                                           Icon(
-                                            _club!.isPublic ? Icons.public : Icons.lock,
+                                            _club!.isPublic
+                                                ? Icons.public
+                                                : Icons.lock,
                                             color: Colors.white,
                                             size: 16,
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
-                                            _club!.isPublic ? 'Public' : 'Private',
+                                            _club!.isPublic
+                                                ? 'Public'
+                                                : 'Private',
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 12,
@@ -314,7 +343,8 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                             },
                           ),
                         PopupMenuButton<String>(
-                          icon: const Icon(Icons.more_vert, color: Colors.white),
+                          icon:
+                              const Icon(Icons.more_vert, color: Colors.white),
                           onSelected: (value) {
                             if (value == 'leave' && _club != null) {
                               _showLeaveClubDialog();
@@ -335,14 +365,17 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                             }
                           },
                           itemBuilder: (context) => [
-                            if (_club != null && _isUserMember() && !_isUserCreator())
+                            if (_club != null &&
+                                _isUserMember() &&
+                                !_isUserCreator())
                               const PopupMenuItem(
                                 value: 'leave',
                                 child: Row(
                                   children: [
                                     Icon(Icons.exit_to_app, color: Colors.red),
                                     SizedBox(width: 8),
-                                    Text('Leave Club', style: TextStyle(color: Colors.red)),
+                                    Text('Leave Club',
+                                        style: TextStyle(color: Colors.red)),
                                   ],
                                 ),
                               ),
@@ -350,7 +383,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                               value: 'share',
                               child: Row(
                                 children: [
-                                  Icon(Icons.share),
+                                  Icon(Icons.share, color: Colors.black),
                                   SizedBox(width: 8),
                                   Text('Share'),
                                 ],
@@ -360,7 +393,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                               value: 'report',
                               child: Row(
                                 children: [
-                                  Icon(Icons.flag),
+                                  Icon(Icons.flag, color: Colors.black),
                                   SizedBox(width: 8),
                                   Text('Report'),
                                 ],
@@ -406,7 +439,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
     if (_isLoadingDiscussions) {
       return _buildLoadingShimmer();
     }
-    
+
     if (_discussions.isEmpty) {
       return _buildEmptyState(
         icon: Icons.forum,
@@ -414,7 +447,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
         message: 'Be the first to start a discussion in this club!',
       );
     }
-    
+
     return RefreshIndicator(
       onRefresh: _fetchDiscussions,
       child: ListView.builder(
@@ -430,7 +463,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
 
   Widget _buildDiscussionCard(ClubDiscussion discussion) {
     final formattedDate = DateFormat.yMMMd().format(discussion.createdAt);
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
@@ -458,7 +491,9 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                     backgroundColor: Colors.deepPurple.withOpacity(0.2),
                     radius: 20,
                     child: Text(
-                      discussion.authorName.substring(0, min(2, discussion.authorName.length)).toUpperCase(),
+                      discussion.authorName
+                          .substring(0, min(2, discussion.authorName.length))
+                          .toUpperCase(),
                       style: TextStyle(
                         color: Colors.deepPurple,
                         fontWeight: FontWeight.bold,
@@ -541,7 +576,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
     if (_isLoadingProblems) {
       return _buildLoadingShimmer();
     }
-    
+
     if (_problems.isEmpty) {
       return _buildEmptyState(
         icon: Icons.code,
@@ -549,7 +584,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
         message: 'Add coding problems for club members to solve!',
       );
     }
-    
+
     return RefreshIndicator(
       onRefresh: _fetchProblems,
       child: ListView.builder(
@@ -565,7 +600,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
 
   Widget _buildProblemCard(ClubProblem problem) {
     final Color difficultyColor = _getDifficultyColor(problem.difficulty);
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
@@ -590,7 +625,8 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: difficultyColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
@@ -606,7 +642,8 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.deepPurple.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
@@ -685,7 +722,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
     if (_isLoadingLeaderboard) {
       return _buildLoadingShimmer();
     }
-    
+
     if (_leaderboard.isEmpty) {
       return _buildEmptyState(
         icon: Icons.leaderboard,
@@ -693,147 +730,238 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
         message: 'Solve problems to appear on the leaderboard!',
       );
     }
-    
-    final userId = Provider.of<UserProvider>(context, listen: false).user.id;
-    
+
+    final _handle =
+        Provider.of<UserProvider>(context, listen: false).user.handle;
+
     return RefreshIndicator(
       onRefresh: _fetchLeaderboard,
-      child: Column(
-        children: [
-          Container(
+      color: Colors.deepPurple,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _leaderboard.length,
+        itemBuilder: (context, index) {
+          final entry = _leaderboard[index];
+          final isCurrentUser = entry['username'] == _handle;
+          final rank = index + 1;
+
+          // Determine rank color
+          Color rankColor = Colors.white;
+          if (rank == 1)
+            rankColor = Colors.amber;
+          else if (rank == 2)
+            rankColor = Colors.grey.shade400;
+          else if (rank == 3) rankColor = Colors.brown.shade500;
+
+          return Card(
+            elevation: 2,
             color: Colors.white,
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                const Expanded(
-                  flex: 1,
-                  child: Text(
-                    'Rank',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const Expanded(
-                  flex: 3,
-                  child: Text(
-                    'User',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Problems',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Points',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
+            margin: const EdgeInsets.only(bottom: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: isCurrentUser
+                  ? BorderSide(color: Colors.deepPurple, width: 2)
+                  : BorderSide.none,
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _leaderboard.length,
-              itemBuilder: (context, index) {
-                final entry = _leaderboard[index];
-                final isCurrentUser = entry['userId'] == userId;
-                
-                return Container(
-                  color: isCurrentUser 
-                      ? Colors.deepPurple.withOpacity(0.1) 
-                      : (index % 2 == 0 ? Colors.grey[100] : Colors.white),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          '${index + 1}',
-                          style: TextStyle(
-                            fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
-                            color: index < 3 ? Colors.deepPurple : null,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 14,
-                              backgroundColor: Colors.deepPurple.withOpacity(0.2),
-                              child: Text(
-                                entry['username'].substring(0, min(1, entry['username'].length)).toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.deepPurple,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              entry['username'],
-                              style: TextStyle(
-                                fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
-                              ),
-                            ),
-                            if (isCurrentUser)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 4),
-                                child: Text(
-                                  '(You)',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.deepPurple,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          '${entry['problemsSolved']}',
-                          style: TextStyle(
-                            fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          '${entry['points']}',
-                          style: TextStyle(
-                            fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
+            child: InkWell(
+              onTap: () {
+                if(isCurrentUser) return;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FriendLandingPage(handle: entry['username']),
                   ),
                 );
               },
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header row: Avatar, Handle, Rank
+                    Row(
+                      children: [
+                        // Avatar
+                        Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.deepPurple.shade300,
+                                Colors.deepPurple.shade700,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.deepPurple.withOpacity(0.3),
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: (entry['avatarUrl'] != null)
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    entry['avatarUrl'],
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Center(
+                                  child: Text(
+                                    entry['username']
+                                        .substring(0, 1)
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(width: 12),
+
+                        // Handle/Username
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                entry['username'],
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: isCurrentUser
+                                      ? Colors.deepPurple
+                                      : Colors.black87,
+                                ),
+                              ),
+                              Text(
+                                entry['rank'],
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: getColorForRating(entry['rating']),
+                                ),
+                              ),
+                              if (isCurrentUser)
+                                const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.person,
+                                      color: Colors.deepPurple,
+                                      size: 16,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'You',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.deepPurple,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ),
+
+                        // Rank
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: rankColor,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: rankColor.withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '#$rank',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+                    // const Divider(height: 1),
+                    // const SizedBox(height: 12),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        // Rating
+                        Row(
+                          children: [
+                            Icon(Icons.star,
+                                size: 16, color: Colors.deepPurple),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Rating',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey[600]),
+                            ),
+                            const SizedBox(width: 7),
+                            Text(
+                              '${entry['rating']}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: getColorForRating(entry['rating']),
+                              ),
+                            ),
+                          ],
+                        ),
+                        // Vertical divider
+                        Container(
+                          height: 24,
+                          width: 1,
+                          color: Colors.grey[400],
+                        ),
+                        // Problems solved
+                        Row(
+                          children: [
+                            Icon(Icons.code,
+                                size: 16, color: Colors.deepPurple),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Problems',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey[600]),
+                            ),
+                            const SizedBox(width: 7),
+                            Text(
+                              '${entry['problemsSolved']}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -1055,14 +1183,14 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
 
   Widget _buildFloatingActionButton() {
     if (_club == null) return const SizedBox.shrink();
-    
+
     final user = Provider.of<UserProvider>(context, listen: false).user;
     final isMember = _club!.members.contains(user.id);
-    
+
     if (!isMember) {
       return _buildJoinButton();
     }
-    
+
     // Show different FAB based on current tab
     switch (_tabController.index) {
       case 1: // Discussions tab
@@ -1081,18 +1209,18 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
         }
         break;
     }
-    
+
     return const SizedBox.shrink();
   }
 
   Widget _buildJoinButton() {
     if (_club == null) return const SizedBox.shrink();
-    
+
     final user = Provider.of<UserProvider>(context, listen: false).user;
     final isMember = _club!.members.contains(user.id);
-    
+
     if (isMember) return const SizedBox.shrink();
-    
+
     return FloatingActionButton.extended(
       onPressed: _joinClub,
       icon: const Icon(Icons.person_add),
@@ -1151,7 +1279,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                 );
                 return;
               }
-              
+
               Navigator.pop(context);
               _addDiscussion(
                 titleController.text.trim(),
@@ -1172,7 +1300,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
   Future<void> _addDiscussion(String title, String content) async {
     try {
       final user = Provider.of<UserProvider>(context, listen: false).user;
-      
+
       // Show loading indicator
       showDialog(
         context: context,
@@ -1181,7 +1309,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
           child: CircularProgressIndicator(),
         ),
       );
-      
+
       await _clubService.addDiscussion(
         context: context,
         clubId: widget.clubId,
@@ -1189,22 +1317,22 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
         content: content,
         authorName: user.handle,
       );
-      
+
       // Hide loading indicator
       Navigator.pop(context);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Discussion posted successfully'),
           backgroundColor: Colors.green,
         ),
       );
-      
+
       _fetchDiscussions();
     } catch (e) {
       // Hide loading indicator
       Navigator.pop(context);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to post discussion: ${e.toString()}'),
@@ -1331,7 +1459,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                     );
                     return;
                   }
-                  
+
                   Navigator.pop(context);
                   _addProblem(
                     titleController.text.trim(),
@@ -1353,10 +1481,11 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
     );
   }
 
-  Future<void> _addProblem(String title, String description, String difficulty, int points) async {
+  Future<void> _addProblem(
+      String title, String description, String difficulty, int points) async {
     try {
       final user = Provider.of<UserProvider>(context, listen: false).user;
-      
+
       // Show loading indicator
       showDialog(
         context: context,
@@ -1365,7 +1494,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
           child: CircularProgressIndicator(),
         ),
       );
-      
+
       await _clubService.addProblem(
         context: context,
         clubId: widget.clubId,
@@ -1374,22 +1503,22 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
         difficulty: difficulty,
         points: points,
       );
-      
+
       // Hide loading indicator
       Navigator.pop(context);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Problem added successfully'),
           backgroundColor: Colors.green,
         ),
       );
-      
+
       _fetchProblems();
     } catch (e) {
       // Hide loading indicator
       Navigator.pop(context);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to add problem: ${e.toString()}'),
@@ -1401,9 +1530,10 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
 
   void _showClubSettingsDialog() {
     if (_club == null) return;
-    
+
     final nameController = TextEditingController(text: _club!.name);
-    final descriptionController = TextEditingController(text: _club!.description);
+    final descriptionController =
+        TextEditingController(text: _club!.description);
     bool isPublic = _club!.isPublic;
 
     showDialog(
@@ -1466,7 +1596,7 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
                     );
                     return;
                   }
-                  
+
                   Navigator.pop(context);
                   // Update club settings
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1564,21 +1694,21 @@ class _ClubDetailPageState extends State<ClubDetailPage> with SingleTickerProvid
 
   bool _isUserMember() {
     if (_club == null) return false;
-    
+
     final userId = Provider.of<UserProvider>(context, listen: false).user.id;
     return _club!.members.contains(userId);
   }
 
   bool _isUserAdmin() {
     if (_club == null) return false;
-    
+
     final userId = Provider.of<UserProvider>(context, listen: false).user.id;
     return _club!.admins.contains(userId);
   }
 
   bool _isUserCreator() {
     if (_club == null) return false;
-    
+
     final userId = Provider.of<UserProvider>(context, listen: false).user.id;
     return _club!.createdBy == userId;
   }
@@ -1609,7 +1739,8 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   _SliverAppBarDelegate(this.tabBar);
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       color: Colors.white,
       child: tabBar,

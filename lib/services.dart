@@ -841,7 +841,7 @@ class ClubService {
           'x-auth-token': token ?? '',
         },
       );
-      
+      print(response.body);
       bool success = false;
       httpErrorHandle(
         response: response,
@@ -1038,9 +1038,9 @@ class ClubService {
 
       // Get user info for all members
       final response = await http.get(
-        Uri.parse('https://codeforces.com/api/user.info?handles=${club.members.join(";")}'),
+        Uri.parse('https://codeforces.com/api/user.info?handles=${club.memberHandles.join(";")}'),
       );
-      print(Uri.parse('https://codeforces.com/api/user.info?handles=${club.members.join(";")}'));
+      //print(Uri.parse('https://codeforces.com/api/user.info?handles=${club.members.join(";")}'));
 
       if (response.statusCode != 200) {
         throw Exception('Failed to fetch user data from Codeforces');
@@ -1056,6 +1056,7 @@ class ClubService {
         return {
           'userId': user['handle'], // Using handle as userId since we don't have backend IDs
           'username': user['handle'],
+          'avatarUrl': user['titlePhoto'] ?? '',
           'rating': user['rating'] ?? 0,
           'maxRating': user['maxRating'] ?? 0,
           'rank': user['rank'] ?? 'unrated',
