@@ -1006,7 +1006,7 @@ Widget _buildClubCard(Club club, {bool showJoinedTag = true}) {
   final bool isUserMember = club.members
       .contains(Provider.of<UserProvider>(context, listen: false).user.id);
   final Color clubColor = _getClubColor(club.name);
-
+  print(club.bannerUrl);
   return Card(
     elevation: 4, // Increased elevation for better shadow
     color: Colors.white,
@@ -1054,11 +1054,11 @@ Widget _buildClubCard(Club club, {bool showJoinedTag = true}) {
                   ),
                 ],
               ),
-              child: club.avatarUrl != null
+              child: club.bannerUrl != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.network(
-                        club.avatarUrl!,
+                        club.bannerUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Center(
@@ -1326,6 +1326,7 @@ Widget _buildClubCard(Club club, {bool showJoinedTag = true}) {
                           // and get back a URL. For now, we'll just store the local path
                           setState(() {
                             bannerUrl = image.path;
+                            print(bannerUrl);
                           });
                         }
                       },
@@ -1461,6 +1462,7 @@ Widget _buildClubCard(Club club, {bool showJoinedTag = true}) {
                             }
 
                             Navigator.pop(context);
+                            print("Calling _createClub");
                             _createClub(
                               nameController.text.trim(),
                               descriptionController.text.trim(),
@@ -1507,76 +1509,67 @@ Widget _buildClubCard(Club club, {bool showJoinedTag = true}) {
   }
 
   Future<void> _createClub(
-    String name,
-    String description,
-    bool isPublic,
-    [String? bannerUrl]
-  ) async {
-    final BuildContext dialogContext = context;
-    
-    try {
-      // Show loading indicator
-      showDialog(
-        context: dialogContext,
-        barrierDismissible: false,
-        builder: (BuildContext context) => WillPopScope(
-          onWillPop: () async => false,
-          child: const Center(
-            child: CircularProgressIndicator(),
-          ),
+  String name,
+  String description,
+  bool isPublic,
+  [String? bannerUrl]
+) async {
+  final BuildContext dialogContext = context;
+  
+  try {
+    showDialog(
+      context: dialogContext,
+      barrierDismissible: false,
+      builder: (_) => WillPopScope(
+        onWillPop: () async => false,
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+    );
+
+    String? uploadedBannerUrl;
+    if (bannerUrl != null) {
+      final file = File(bannerUrl);
+      final fileName = 'club_banners/${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+      final ref = FirebaseStorage.instance.ref().child(fileName);
+
+      // === FIXED upload logic ===
+      final uploadTask = ref.putFile(file);
+      final TaskSnapshot snapshot = await uploadTask;
+      uploadedBannerUrl = await snapshot.ref.getDownloadURL();
+    }
+
+    await _clubService.createClub(
+      context: dialogContext,
+      name: name,
+      description: description,
+      isPublic: isPublic,
+      bannerUrl: uploadedBannerUrl,
+    );
+
+    if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+    if (dialogContext.mounted) {
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        const SnackBar(
+          content: Text('Club created successfully'),
+          backgroundColor: Colors.green,
         ),
       );
+    }
 
-      String? uploadedBannerUrl;
-      if (bannerUrl != null) {
-        // Upload the image to Firebase Storage
-        final file = File(bannerUrl);
-        final fileName = 'club_banners/${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
-        final ref = FirebaseStorage.instance.ref().child(fileName);
-        final uploadTask = ref.putFile(file);
-        final snapshot = await uploadTask.whenComplete(() {});
-        uploadedBannerUrl = await snapshot.ref.getDownloadURL();
-      }
-
-      await _clubService.createClub(
-        context: dialogContext,
-        name: name,
-        description: description,
-        isPublic: isPublic,
-        bannerUrl: uploadedBannerUrl,
+    await _fetchClubs();
+  } catch (e) {
+    if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+    if (dialogContext.mounted) {
+      ScaffoldMessenger.of(dialogContext).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create club: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
       );
-
-      // Hide loading indicator
-      if (dialogContext.mounted) {
-        Navigator.of(dialogContext).pop();
-      }
-
-      if (dialogContext.mounted) {
-        ScaffoldMessenger.of(dialogContext).showSnackBar(
-          const SnackBar(
-            content: Text('Club created successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-
-      await _fetchClubs(); // Refresh the clubs list
-    } catch (e) {
-      // Hide loading indicator
-      if (dialogContext.mounted) {
-        Navigator.of(dialogContext).pop();
-      }
-
-      if (dialogContext.mounted) {
-        ScaffoldMessenger.of(dialogContext).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create club: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     }
   }
+}
+
 
   Widget _buildNoCredentialsMessage() {
     return Center(

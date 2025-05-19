@@ -744,6 +744,31 @@ class ClubService {
       throw Exception(e.toString());
     }
   }
+
+  Future<bool> deleteClub(BuildContext context, String clubId) async{
+    try {
+      var userProvider = Provider.of<UserProvider>(context, listen: false);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('x-auth-token');
+
+      final response = await http.delete(
+        Uri.parse('${Constants.uri}/api/clubs/$clubId'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'x-auth-token': token ?? '',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(jsonDecode(response.body)['msg'] ?? 'Failed to delete club');
+      }
+
+      return true;
+    } catch (e) {
+      showAlert(context, 'Error', e.toString());
+      return false;
+    }
+  }
   
   // Get club by ID
   Future<Club?> getClubById(BuildContext context, String clubId) async {
@@ -1036,6 +1061,14 @@ class ClubService {
         throw Exception('Club not found');
       }
 
+      // Build a mapping from handle to userId
+    final Map<String, String> handleToUserId = {};
+    for (int i = 0; i < club.memberHandles.length; i++) {
+      if (i < club.members.length) {
+        handleToUserId[club.memberHandles[i]] = club.members[i];
+      }
+    }
+
       // Get user info for all members
       final response = await http.get(
         Uri.parse('https://codeforces.com/api/user.info?handles=${club.memberHandles.join(";")}'),
@@ -1054,46 +1087,18 @@ class ClubService {
       // Transform the data into leaderboard format
       final List<Map<String, dynamic>> leaderboard = data['result'].map<Map<String, dynamic>>((user) {
         return {
-          'userId': user['handle'], // Using handle as userId since we don't have backend IDs
+          'userId': handleToUserId[user['handle']] ?? '',
           'username': user['handle'],
           'avatarUrl': user['titlePhoto'] ?? '',
           'rating': user['rating'] ?? 0,
           'maxRating': user['maxRating'] ?? 0,
           'rank': user['rank'] ?? 'unrated',
           'contribution': user['contribution'] ?? 0,
-          'problemsSolved': 0, // Will be updated from user.status
-          'points': user['rating'] ?? 0, // Using rating as points for now
         };
       }).toList();
 
       // Sort leaderboard by rating (points)
-      leaderboard.sort((a, b) => (b['points'] as int).compareTo(a['points'] as int));
-
-      // Get solved problems count for each user
-      for (var entry in leaderboard) {
-        try {
-          final statusResponse = await http.get(
-            Uri.parse('https://codeforces.com/api/user.status?handle=${entry['username']}&from=1'),
-          );
-
-          if (statusResponse.statusCode == 200) {
-            final statusData = jsonDecode(statusResponse.body);
-            if (statusData['status'] == 'OK') {
-              // Count unique solved problems
-              final solvedProblems = <String>{};
-              for (var submission in statusData['result']) {
-                if (submission['verdict'] == 'OK') {
-                  final problem = submission['problem'];
-                  solvedProblems.add('${problem['contestId']}_${problem['index']}');
-                }
-              }
-              entry['problemsSolved'] = solvedProblems.length;
-            }
-          }
-        } catch (e) {
-          print('Error fetching solved problems for ${entry['username']}: $e');
-        }
-      }
+      leaderboard.sort((a, b) => (b['rating'] as int).compareTo(a['rating'] as int));
 
       return leaderboard;
     } catch (e) {

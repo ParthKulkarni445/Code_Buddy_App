@@ -39,6 +39,10 @@ class _ClubDetailPageState extends State<ClubDetailPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (mounted)
+        setState(() {}); // This will rebuild the widget on tab change
+    });
     _fetchClubDetails();
   }
 
@@ -379,6 +383,20 @@ class _ClubDetailPageState extends State<ClubDetailPage>
                                   ],
                                 ),
                               ),
+                            if(_club != null &&
+                                _isUserMember() &&
+                                _isUserCreator())
+                                const PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete, color: Colors.red),
+                                    SizedBox(width: 8),
+                                    Text('Delete Club',
+                                        style: TextStyle(color: Colors.red)),
+                                  ],
+                                ),
+                              ),
                             const PopupMenuItem(
                               value: 'share',
                               child: Row(
@@ -411,9 +429,9 @@ class _ClubDetailPageState extends State<ClubDetailPage>
                           labelColor: Colors.deepPurple,
                           unselectedLabelColor: Colors.grey,
                           tabs: const [
-                            Tab(text: 'Leaderboard'),
                             Tab(text: 'Discussions'),
                             Tab(text: 'Problems'),
+                            Tab(text: 'Leaderboard'),
                           ],
                         ),
                       ),
@@ -424,9 +442,9 @@ class _ClubDetailPageState extends State<ClubDetailPage>
                 body: TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildLeaderboardTab(),
                     _buildDiscussionsTab(),
                     _buildProblemsTab(),
+                    _buildLeaderboardTab(),
                   ],
                 ),
               ),
@@ -450,6 +468,8 @@ class _ClubDetailPageState extends State<ClubDetailPage>
 
     return RefreshIndicator(
       onRefresh: _fetchDiscussions,
+      color: Colors.white,
+      backgroundColor: Colors.deepPurple,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _discussions.length,
@@ -463,75 +483,75 @@ class _ClubDetailPageState extends State<ClubDetailPage>
 
   Widget _buildDiscussionCard(ClubDiscussion discussion) {
     final formattedDate = DateFormat.yMMMd().format(discussion.createdAt);
+    final currentUserId = Provider.of<UserProvider>(context, listen: false).user.id;
+    final isCurrentUserAuthor = discussion.authorId == currentUserId;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 16, left: (isCurrentUserAuthor ? 32 : 0), right: (isCurrentUserAuthor ? 0 : 32)),
+      color: (!isCurrentUserAuthor)?Colors.white:Colors.deepPurple[100],
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(12),
+          bottomRight: Radius.circular(12),
+          topLeft: isCurrentUserAuthor ? Radius.circular(12) : Radius.zero,
+          topRight: isCurrentUserAuthor ? Radius.zero : Radius.circular(12), 
+        ),
       ),
-      child: InkWell(
-        onTap: () {
-          // Open discussion detail
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Discussion detail coming soon'),
-            ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.deepPurple.withOpacity(0.2),
-                    radius: 20,
-                    child: Text(
-                      discussion.authorName
-                          .substring(0, min(2, discussion.authorName.length))
-                          .toUpperCase(),
-                      style: TextStyle(
-                        color: Colors.deepPurple,
-                        fontWeight: FontWeight.bold,
-                      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: (isCurrentUserAuthor)?Colors.white:Colors.deepPurple[100],
+                  radius: 20,
+                  child: Text(
+                    discussion.authorName
+                        .substring(0, min(2, discussion.authorName.length))
+                        .toUpperCase(),
+                    style: TextStyle(
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          discussion.authorName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          formattedDate,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                discussion.title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        discussion.authorName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        formattedDate,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: (isCurrentUserAuthor)? Colors.deepPurple[400]:Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              discussion.title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
+            ),
+            if(discussion.content.isNotEmpty) 
               const SizedBox(height: 8),
+            if(discussion.content.isNotEmpty)
               Text(
                 discussion.content,
                 style: TextStyle(
@@ -541,32 +561,26 @@ class _ClubDetailPageState extends State<ClubDetailPage>
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(Icons.comment, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${discussion.commentCount} comments',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(
+                  Icons.access_time,
+                  color: (isCurrentUserAuthor)? Colors.deepPurple:Colors.grey[800],
+                  size: 15,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  DateFormat.jm().format(discussion.createdAt),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: (isCurrentUserAuthor)? Colors.deepPurple:Colors.grey[800],
                   ),
-                  const SizedBox(width: 16),
-                  Icon(Icons.thumb_up, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${discussion.likeCount}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            )
+          ],
         ),
       ),
     );
@@ -587,6 +601,8 @@ class _ClubDetailPageState extends State<ClubDetailPage>
 
     return RefreshIndicator(
       onRefresh: _fetchProblems,
+      color: Colors.white,
+      backgroundColor: Colors.deepPurple,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _problems.length,
@@ -603,6 +619,7 @@ class _ClubDetailPageState extends State<ClubDetailPage>
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
+      color: Colors.white,
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -733,10 +750,12 @@ class _ClubDetailPageState extends State<ClubDetailPage>
 
     final _handle =
         Provider.of<UserProvider>(context, listen: false).user.handle;
+    //print(_leaderboard);
 
     return RefreshIndicator(
       onRefresh: _fetchLeaderboard,
-      color: Colors.deepPurple,
+      color: Colors.white,
+      backgroundColor: Colors.deepPurple,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _leaderboard.length,
@@ -765,11 +784,12 @@ class _ClubDetailPageState extends State<ClubDetailPage>
             ),
             child: InkWell(
               onTap: () {
-                if(isCurrentUser) return;
+                if (isCurrentUser) return;
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => FriendLandingPage(handle: entry['username']),
+                    builder: (context) =>
+                        FriendLandingPage(handle: entry['username']),
                   ),
                 );
               },
@@ -935,17 +955,19 @@ class _ClubDetailPageState extends State<ClubDetailPage>
                         // Problems solved
                         Row(
                           children: [
-                            Icon(Icons.code,
+                            Icon(Icons.person,
                                 size: 16, color: Colors.deepPurple),
                             const SizedBox(width: 4),
                             Text(
-                              'Problems',
+                              'Position',
                               style: TextStyle(
                                   fontSize: 12, color: Colors.grey[600]),
                             ),
                             const SizedBox(width: 7),
                             Text(
-                              '${entry['problemsSolved']}',
+                              (_club!.admins.contains(entry['userId']))
+                                  ? 'Admin'
+                                  : 'Member',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -1193,17 +1215,17 @@ class _ClubDetailPageState extends State<ClubDetailPage>
 
     // Show different FAB based on current tab
     switch (_tabController.index) {
-      case 1: // Discussions tab
+      case 0: // Discussions tab
         return FloatingActionButton(
           onPressed: () => _showNewDiscussionDialog(),
-          child: const Icon(Icons.add_comment),
+          child: const Icon(Icons.add_comment, color: Colors.white),
           backgroundColor: Colors.deepPurple,
         );
-      case 2: // Problems tab
+      case 1: // Problems tab
         if (_isUserAdmin()) {
           return FloatingActionButton(
             onPressed: () => _showAddProblemDialog(),
-            child: const Icon(Icons.add),
+            child: const Icon(Icons.add, color: Colors.white),
             backgroundColor: Colors.deepPurple,
           );
         }
@@ -1619,6 +1641,29 @@ class _ClubDetailPageState extends State<ClubDetailPage>
     );
   }
 
+  void _showDeleteClubDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Club'),
+        content: const Text('Are you sure you want to delete this club?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteClub();
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showLeaveClubDialog() {
     showDialog(
       context: context,
@@ -1685,6 +1730,30 @@ class _ClubDetailPageState extends State<ClubDetailPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to leave club: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteClub() async {
+    try {
+      await _clubService.deleteClub(context, widget.clubId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully deleted the club'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context); // Close the club page
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete club: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
