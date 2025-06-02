@@ -1,3 +1,4 @@
+import 'package:acex/friends_page.dart';
 import 'package:acex/problemset.dart';
 import 'package:acex/social_page.dart';
 import 'package:flutter/material.dart';
@@ -44,8 +45,8 @@ class _LandingPageState extends State<LandingPage> {
     final handle = user.handle;
     pages = [
       ProfilePage(handle: handle),
-      const ContestsPage(),
-      const SocialPage(),
+      ContestsPage(handle: handle),
+      const FriendsPage(),
       SubmissionsPage(handle: handle),
       StatsPage(handle: handle),
       ProblemPage(handle: handle),

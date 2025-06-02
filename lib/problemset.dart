@@ -1,8 +1,15 @@
 import 'package:acex/services.dart';
 import 'package:acex/utils/loading_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
+import 'package:multi_select_flutter/chip_display/multi_select_chip_display.dart';
+import 'package:multi_select_flutter/dialog/multi_select_dialog_field.dart';
+import 'package:multi_select_flutter/util/multi_select_item.dart';
+import 'package:multi_select_flutter/util/multi_select_list_type.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_math_fork/flutter_math.dart'
+show Math, MathOptions, MathStyle;
 
 class ProblemPage extends StatefulWidget {
   const ProblemPage({super.key, required this.handle});
@@ -21,61 +28,59 @@ class _ProblemPageState extends State<ProblemPage> {
   final Set<String> _solvedProblemKeys = {};
   final Set<String> _attemptedProblemKeys = {};
   String _problemKey(String contestId, String index) => '$contestId$index';
-  
+
   // Pagination
   int _currentPage = 1;
   final int _pageSize = 50;
   double _startRating = 800;
   double _endRating = 3500;
-  
+
   // Filters
   RangeValues _ratingRange = const RangeValues(800, 3500);
   final List<String> _availableTags = [
-  '2-sat',
-  'binary search',
-  'bitmasks',
-  'brute force',
-  'chinese remainder theorem',
-  'combinatorics',
-  'constructive algorithms',
-  'data structures',
-  'dfs and similar',
-  'divide and conquer',
-  'dp',
-  'dsu',
-  'expression parsing',
-  'fft',
-  'flows',
-  'games',
-  'geometry',
-  'graph matchings',
-  'graphs',
-  'greedy',
-  'hashing',
-  'implementation',
-  'interactive',
-  'math',
-  'matrices',
-  'meet-in-the-middle',
-  'number theory',
-  'probabilities',
-  'shortest paths',
-  'sortings',
-  'string suffix structures',
-  'strings',
-  'ternary search',
-  'trees',
-  'two pointers',
-];
+    '2-sat',
+    'binary search',
+    'bitmasks',
+    'brute force',
+    'chinese remainder theorem',
+    'combinatorics',
+    'constructive algorithms',
+    'data structures',
+    'dfs and similar',
+    'divide and conquer',
+    'dp',
+    'dsu',
+    'expression parsing',
+    'fft',
+    'flows',
+    'games',
+    'geometry',
+    'graph matchings',
+    'graphs',
+    'greedy',
+    'hashing',
+    'implementation',
+    'interactive',
+    'math',
+    'matrices',
+    'meet-in-the-middle',
+    'number theory',
+    'probabilities',
+    'shortest paths',
+    'sortings',
+    'string suffix structures',
+    'strings',
+    'ternary search',
+    'trees',
+    'two pointers',
+  ];
 
   final Set<String> _selectedTags = {};
-  
+
   // Toggle options
   bool _showTagsForUnsolved = true;
   bool _showRatingForUnsolved = true;
-  
-  // Filter dialog state
-  bool _isFilterDialogOpen = false;
+  bool _isFilterExpanded = false;
 
   @override
   void initState() {
@@ -84,7 +89,7 @@ class _ProblemPageState extends State<ProblemPage> {
     _loadFilterState();
   }
 
-   // Load filter values from SharedPreferences.
+  // Load filter values from SharedPreferences.
   Future<void> _loadFilterState() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -99,7 +104,7 @@ class _ProblemPageState extends State<ProblemPage> {
     });
   }
 
-   // Save filter values to SharedPreferences.
+  // Save filter values to SharedPreferences.
   Future<void> _saveFilterState() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('startRating', _startRating);
@@ -147,13 +152,13 @@ class _ProblemPageState extends State<ProblemPage> {
         if (problem['rating'] == null) {
           return false;
         }
-        
+
         // Filter by rating range
         final rating = problem['rating'] as int;
         if (rating < _ratingRange.start || rating > _ratingRange.end) {
           return false;
         }
-        
+
         // Filter by tags
         if (_selectedTags.isNotEmpty) {
           final problemTags = List<String>.from(problem['tags']);
@@ -168,7 +173,7 @@ class _ProblemPageState extends State<ProblemPage> {
             return false;
           }
         }
-        
+
         return true;
       }).toList();
       _saveFilterState();
@@ -212,266 +217,26 @@ class _ProblemPageState extends State<ProblemPage> {
 
   int _getProblemSolvedCount(String contestId, String index) {
     final stat = _problemStatistics.firstWhere(
-      (stat) => stat['contestId'].toString() == contestId && stat['index'] == index,
+      (stat) =>
+          stat['contestId'].toString() == contestId && stat['index'] == index,
       orElse: () => {'solvedCount': 0},
     );
     return stat['solvedCount'] ?? 0;
   }
 
-  void _showFilterDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            backgroundColor: Colors.white,
-            title: Row(
-              children: [
-                const Icon(Icons.filter_list, color: Colors.teal),
-                const SizedBox(width: 8),
-                const Text('Filter Problems'),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.grey),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Rating range filter title
-                    Row(
-                      children: [
-                        const Icon(Icons.star, color: Colors.teal, size: 20),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'From Rating',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const Spacer(),
-                        Text(
-                            '${_startRating.round()}',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.teal),
-                          ),
-                      ],
-                    ),
-                    Slider(
-                      value: _startRating,
-                      min: 800,
-                      max: 3500,
-                      divisions: 27,
-                      activeColor: Colors.teal,
-                      inactiveColor: Colors.teal.withOpacity(0.3),
-                      label: _startRating.round().toString(),
-                      onChanged: (double value) {
-                        setState(() {
-                          _startRating = value;
-                          // Ensure _startRating does not exceed _endRating
-                          if (_startRating > _endRating) {
-                            _endRating = _startRating;
-                          }
-                        });
-                      },
-                    ),
+  void _toggleFilterExpansion() {
+    setState(() {
+      _isFilterExpanded = !_isFilterExpanded;
+    });
+  }
 
-                    // Second slider (end rating)
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, color: Colors.teal, size: 20),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'To Rating',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${_endRating.round()}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.teal),
-                        ),
-                      ],
-                    ),
-                    Slider(
-                      value: _endRating,
-                      min: 800,
-                      max: 3500,
-                      divisions: 27,
-                      activeColor: Colors.teal,
-                      inactiveColor: Colors.teal.withOpacity(0.3),
-                      label: _endRating.round().toString(),
-                      onChanged: (double value) {
-                        setState(() {
-                          _endRating = value;
-                          // Ensure _endRating does not drop below _startRating
-                          if (_endRating < _startRating) {
-                            _startRating = _endRating;
-                          }
-                        });
-                      },
-                    ),
-
-                    const Divider(height: 24),
-
-                    // Tags filter
-                    Row(
-                      children: [
-                        const Icon(Icons.label_outline, color: Colors.teal, size: 20),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Problem Tags',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const Spacer(),
-                        if (_selectedTags.isNotEmpty)
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _selectedTags.clear();
-                              });
-                            },
-                            child: Text(
-                              'Clear (${_selectedTags.length})',
-                              style: const TextStyle(color: Colors.teal),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: Colors.teal[50],
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(8),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          alignment: WrapAlignment.center,
-                          children: _availableTags.map((tag) {
-                            final isSelected = _selectedTags.contains(tag);
-                            return FilterChip(
-                              label: Text(
-                                tag,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: isSelected ? Colors.white : Colors.black,
-                                ),
-                              ),
-                              selected: isSelected,
-                              selectedColor: Colors.teal,
-                              backgroundColor: Colors.grey.shade200,
-                              checkmarkColor: Colors.white,
-                              onSelected: (bool selected) {
-                                setState(() {
-                                  if (selected) {
-                                    _selectedTags.add(tag);
-                                  } else {
-                                    _selectedTags.remove(tag);
-                                  }
-                                });
-                              },
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                    const Divider(height: 24),
-                    // Toggle options
-                    Row(
-                      children: [
-                        const Icon(Icons.visibility, color: Colors.teal, size: 20),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Show for unsolved:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ChoiceChip(
-                          label: const Text('Tags'),
-                          selected: _showTagsForUnsolved,
-                          selectedColor: Colors.teal,
-                          backgroundColor: Colors.white,
-                          checkmarkColor: (_showTagsForUnsolved) ? Colors.white : Colors.black,
-                          labelStyle: TextStyle(
-                            color: _showTagsForUnsolved ? Colors.white : Colors.black,
-                          ),
-                          onSelected: (bool selected) {
-                            setState(() {
-                              _showTagsForUnsolved = selected;
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        ChoiceChip(
-                          label: const Text('Rating'),
-                          selected: _showRatingForUnsolved,
-                          selectedColor: Colors.teal,
-                          backgroundColor: Colors.white,
-                          checkmarkColor: (_showRatingForUnsolved) ? Colors.white: Colors.black,
-                          labelStyle: TextStyle(
-                            color: _showRatingForUnsolved ? Colors.white : Colors.black,
-                          ),
-                          onSelected: (bool selected) {
-                            setState(() {
-                              _showRatingForUnsolved = selected;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actionsAlignment: MainAxisAlignment.spaceEvenly,
-            actions: [
-              OutlinedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _startRating = 800;
-                    _endRating = 3500;
-                    _selectedTags.clear();
-                  });
-                },
-                icon: const Icon(Icons.refresh, size: 18, color: Colors.teal,),
-                label: const Text('Reset All'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.teal,
-                  side: const BorderSide(color: Colors.teal, width: 2),
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _applyFilters();
-                },
-                icon: const Icon(Icons.check, size: 18, color: Colors.white),
-                label: const Text('Apply'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+  void _resetFilters() {
+    setState(() {
+      _startRating = 800;
+      _endRating = 3500;
+      _selectedTags.clear();
+      _applyFilters();
+    });
   }
 
   @override
@@ -495,38 +260,259 @@ class _ProblemPageState extends State<ProblemPage> {
         surfaceTintColor: Colors.teal,
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list, color: Colors.white),
-            onPressed: _showFilterDialog,
+            icon: Icon(
+              _isFilterExpanded ? Icons.filter_list_off : Icons.filter_list,
+              color: Colors.white,
+            ),
+            onPressed: _toggleFilterExpansion,
           )
         ],
       ),
       body: FutureBuilder(
-        future: problemsetData,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingCard(primaryColor: Colors.teal);
-          }
-          if (snapshot.hasError || snapshot.data == null) {
-            return _buildErrorWidget();
-          }
-          
-          return RefreshIndicator(
-            onRefresh: _refreshData,
-            color: Colors.black,
-            backgroundColor: Colors.teal,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(5.0),
-              physics: const AlwaysScrollableScrollPhysics(),
+          future: problemsetData,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const LoadingCard(primaryColor: Colors.teal);
+            }
+            if (snapshot.hasError || snapshot.data == null) {
+              return _buildErrorWidget();
+            }
+
+            return RefreshIndicator(
+              onRefresh: _refreshData,
+              color: Colors.black,
+              backgroundColor: Colors.teal,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildProblemList(),
-                  const SizedBox(height: 60),
+                  // Inline filter section
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    height: _isFilterExpanded ? null : 0,
+                    child: _isFilterExpanded ? _buildFilterSection() : null,
+                  ),
+                  // Problem list
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(5.0),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildProblemList(),
+                          const SizedBox(height: 60),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
+            );
+          }),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Show problem details modal with LaTeX support
+          _showProblemDetailsModal(context);
+        },
+        backgroundColor: Colors.teal,
+        child: const Icon(Icons.preview, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildFilterSection() {
+    return Card(
+      margin: const EdgeInsets.all(16),
+      color: Colors.white,
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Rating range filter
+            Row(
+              children: [
+                const Icon(Icons.star, color: Colors.teal, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'Rating Range',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                Text(
+                  '${_startRating.round()} - ${_endRating.round()}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.teal),
+                ),
+              ],
             ),
-          );
-        }
+            const SizedBox(height: 8),
+            RangeSlider(
+              values: RangeValues(_startRating, _endRating),
+              min: 800,
+              max: 3500,
+              divisions: 27,
+              activeColor: Colors.teal,
+              inactiveColor: Colors.teal.withOpacity(0.3),
+              labels: RangeLabels(
+                _startRating.round().toString(),
+                _endRating.round().toString(),
+              ),
+              onChanged: (RangeValues values) {
+                setState(() {
+                  _startRating = values.start;
+                  _endRating = values.end;
+                });
+              },
+              onChangeEnd: (RangeValues values) {
+                _applyFilters();
+              },
+            ),
+
+            const Divider(height: 24),
+
+            // Tags filter
+            Row(
+              children: [
+                const Icon(Icons.label_outline, color: Colors.teal, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'Problem Tags',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                if (_selectedTags.isNotEmpty)
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedTags.clear();
+                        _applyFilters();
+                      });
+                    },
+                    child: Text(
+                      'Clear (${_selectedTags.length})',
+                      style: const TextStyle(color: Colors.teal),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            MultiSelectDialogField<String>(
+              items: _availableTags
+                  .map((tag) => MultiSelectItem<String>(tag, tag))
+                  .toList(),
+              title: const Text('Problem Tags'),
+              buttonText: const Text('Select Tags'),
+              buttonIcon: const Icon(Icons.sell_rounded , color: Colors.teal),
+              decoration: BoxDecoration(
+                color: Colors.teal.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              listType: MultiSelectListType.LIST,
+              initialValue: _selectedTags.toList(),
+              chipDisplay: MultiSelectChipDisplay(
+                chipColor: Colors.teal,
+                textStyle: const TextStyle(color: Colors.white, fontSize: 12),
+                onTap: (value) {
+                  setState(() {
+                    _selectedTags.remove(value);
+                    _applyFilters();
+                  });
+                },
+              ),
+              onConfirm: (values) {
+                setState(() {
+                  _selectedTags
+                    ..clear()
+                    ..addAll(values);
+                  _applyFilters();
+                });
+              },
+              // Teal‐themed dialog
+              selectedColor: Colors.teal,
+              unselectedColor: Colors.teal.shade50,
+              checkColor: Colors.white,
+              confirmText: const Text('OK', style: TextStyle(color: Colors.teal)),
+              cancelText: const Text('CANCEL', style: TextStyle(color: Colors.teal)),
+              itemsTextStyle: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 14,
+              ),
+              selectedItemsTextStyle: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 14,
+              ),
+            ),
+            const Divider(height: 24),
+
+            // Toggle options
+            Row(
+              children: [
+                const Icon(Icons.visibility, color: Colors.teal, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'Show for unsolved:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                ChoiceChip(
+                  label: const Text('Tags'),
+                  selected: _showTagsForUnsolved,
+                  selectedColor: Colors.teal,
+                  backgroundColor: Colors.white,
+                  checkmarkColor:
+                      (_showTagsForUnsolved) ? Colors.white : Colors.black,
+                  labelStyle: TextStyle(
+                    color: _showTagsForUnsolved ? Colors.white : Colors.black,
+                  ),
+                  onSelected: (bool selected) {
+                    setState(() {
+                      _showTagsForUnsolved = selected;
+                      _applyFilters();
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('Rating'),
+                  selected: _showRatingForUnsolved,
+                  selectedColor: Colors.teal,
+                  backgroundColor: Colors.white,
+                  checkmarkColor:
+                      (_showRatingForUnsolved) ? Colors.white : Colors.black,
+                  labelStyle: TextStyle(
+                    color: _showRatingForUnsolved ? Colors.white : Colors.black,
+                  ),
+                  onSelected: (bool selected) {
+                    setState(() {
+                      _showRatingForUnsolved = selected;
+                      _applyFilters();
+                    });
+                  },
+                ),
+                const Spacer(),
+                OutlinedButton.icon(
+                  onPressed: _resetFilters,
+                  icon: const Icon(Icons.refresh, size: 18, color: Colors.teal),
+                  label: const Text('Reset All'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.teal,
+                    side: const BorderSide(color: Colors.teal, width: 2),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -565,10 +551,11 @@ class _ProblemPageState extends State<ProblemPage> {
 
     final int totalPages = (_filteredProblems.length / _pageSize).ceil();
     final int startIndex = (_currentPage - 1) * _pageSize;
-    final int endIndex = startIndex + _pageSize > _filteredProblems.length 
-        ? _filteredProblems.length 
+    final int endIndex = startIndex + _pageSize > _filteredProblems.length
+        ? _filteredProblems.length
         : startIndex + _pageSize;
-    final List<dynamic> currentPageProblems = _filteredProblems.sublist(startIndex, endIndex);
+    final List<dynamic> currentPageProblems =
+        _filteredProblems.sublist(startIndex, endIndex);
 
     return Column(
       children: [
@@ -576,7 +563,8 @@ class _ProblemPageState extends State<ProblemPage> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: currentPageProblems.length,
-          itemBuilder: (context, index) => _buildProblemTile(currentPageProblems[index]),
+          itemBuilder: (context, index) =>
+              _buildProblemTile(currentPageProblems[index]),
         ),
         Padding(
           padding: const EdgeInsets.all(16.0),
@@ -584,19 +572,21 @@ class _ProblemPageState extends State<ProblemPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               ElevatedButton(
-                onPressed: _currentPage > 1 
-                  ? () => setState(() => _currentPage--)
-                  : null,
+                onPressed: _currentPage > 1
+                    ? () => setState(() => _currentPage--)
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
                   foregroundColor: Colors.white,
                   elevation: 2,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 child: const Icon(Icons.chevron_left),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(20),
@@ -612,13 +602,14 @@ class _ProblemPageState extends State<ProblemPage> {
               ),
               ElevatedButton(
                 onPressed: _currentPage < totalPages
-                  ? () => setState(() => _currentPage++)
-                  : null,
+                    ? () => setState(() => _currentPage++)
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
                   foregroundColor: Colors.white,
                   elevation: 2,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 child: const Icon(Icons.chevron_right),
               ),
@@ -636,12 +627,13 @@ class _ProblemPageState extends State<ProblemPage> {
     final int rating = problem['rating'] ?? 0;
     final List<String> tags = List<String>.from(problem['tags']);
     final bool isSolved = _isProblemSolved(contestId, index);
+    //print('Question: $contestId$index is solved: $isSolved');
     final bool isAttempted = _isProblemAttempted(contestId, index);
     final int solvedCount = _getProblemSolvedCount(contestId, index);
-    
+
     Color backgroundColor = Colors.white;
     Color borderColor = Colors.grey[600]!;
-    
+
     if (isSolved) {
       backgroundColor = Colors.green[50]!;
       borderColor = Colors.green[200]!;
@@ -649,7 +641,7 @@ class _ProblemPageState extends State<ProblemPage> {
       backgroundColor = Colors.red[50]!;
       borderColor = Colors.red[200]!;
     }
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       elevation: 7,
@@ -669,7 +661,43 @@ class _ProblemPageState extends State<ProblemPage> {
           color: Colors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
-            onTap: () => _launchURL(contestId, index),
+            onTap: () async {
+              // Show loading indicator
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.teal,
+                  ),
+                ),
+              );
+
+              try {
+                // Fetch problem details
+                final details = await ApiService().getProblemDetails(
+                  int.parse(contestId),
+                  index,
+                );
+
+                // Close loading indicator
+                Navigator.of(context).pop();
+
+                // Show problem details
+                _showProblemDetailsModal(
+                  context,
+                  contestId: contestId,
+                  index: index,
+                  details: details,
+                );
+              } catch (e) {
+                // Close loading indicator
+                Navigator.of(context).pop();
+
+                // Fallback to direct URL launch
+                _launchURL(contestId, index);
+              }
+            },
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -689,32 +717,33 @@ class _ProblemPageState extends State<ProblemPage> {
                           ),
                         ),
                       ),
-                      (_showRatingForUnsolved||isSolved)?Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[900],
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey[400]!,
-                              blurRadius: 2,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          rating.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      )
-                      :Container(),
+                      (_showRatingForUnsolved || isSolved)
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[900],
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey[400]!,
+                                    blurRadius: 2,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                rating.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            )
+                          : Container(),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -748,7 +777,8 @@ class _ProblemPageState extends State<ProblemPage> {
                     children: [
                       if (isSolved)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.green.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(16),
@@ -756,7 +786,8 @@ class _ProblemPageState extends State<ProblemPage> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.check_circle, size: 16, color: Colors.green[700]),
+                              Icon(Icons.check_circle,
+                                  size: 16, color: Colors.green[700]),
                               const SizedBox(width: 4),
                               Text(
                                 'Solved',
@@ -770,7 +801,8 @@ class _ProblemPageState extends State<ProblemPage> {
                         )
                       else if (isAttempted)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.red.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(16),
@@ -778,7 +810,8 @@ class _ProblemPageState extends State<ProblemPage> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.error_outline, size: 16, color: Colors.red[700]),
+                              Icon(Icons.error_outline,
+                                  size: 16, color: Colors.red[700]),
                               const SizedBox(width: 4),
                               Text(
                                 'Attempted',
@@ -801,7 +834,8 @@ class _ProblemPageState extends State<ProblemPage> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value, Color textColor) {
+  Widget _buildInfoRow(
+      IconData icon, String label, String value, Color textColor) {
     return Row(
       children: [
         Icon(icon, size: 16, color: Colors.grey[600]),
@@ -828,23 +862,294 @@ class _ProblemPageState extends State<ProblemPage> {
     );
   }
 
+  void _showProblemDetailsModal(
+    BuildContext context, {
+    String? contestId,
+    String? index,
+    ProblemDetails? details,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Handle
+                  Container(
+                    width: 40,
+                    height: 5,
+                    margin: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 8,
+                          child: Text(
+                            details?.title ?? 'Problem Details',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (contestId != null && index != null)
+                          IconButton(
+                            icon: const Icon(Icons.open_in_browser,
+                                color: Colors.teal),
+                            onPressed: () => _launchURL(contestId, index),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const Divider(),
+                  // Content
+                  Expanded(
+                    child: details == null
+                        ? const Center(child: CircularProgressIndicator())
+                        : SingleChildScrollView(
+                            controller: scrollController,
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Problem Statement
+                                const Text(
+                                  'Problem Statement',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.teal,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                _buildLatexText(details.statement, context),
+                                const SizedBox(height: 16),
+
+                                // Input Specification
+                                const Text(
+                                  'Input Specification',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.teal,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                _buildLatexText(details.inputSpec, context),
+                                const SizedBox(height: 16),
+
+                                // Output Specification
+                                const Text(
+                                  'Output Specification',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.teal,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                _buildLatexText(details.outputSpec, context),
+                                const SizedBox(height: 16),
+
+                                // Examples
+                                const Text(
+                                  'Examples',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.teal,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ...details.examples.map(
+                                    (example) => _buildExampleWidget(example)),
+                              ],
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildLatexText(String text, BuildContext context) {
+    // Match display-math ($$$…$$$) or image markdown (![alt](url))
+    final pattern = RegExp(
+      r'(\$\$\$[\s\S]+?\$\$\$)|(!\[[^\]]*?\]\([^\)]+?\))',
+      dotAll: true,
+    );
+
+    final spans = <InlineSpan>[];
+    int lastEnd = 0;
+
+    for (final match in pattern.allMatches(text)) {
+      // plain text before this match
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(text: text.substring(lastEnd, match.start)));
+      }
+
+      final mathBlock = match.group(1);
+      final imgMarkdown = match.group(2);
+
+      if (mathBlock != null) {
+        // $$$…$$$ → TeX
+        final expr = mathBlock.substring(3, mathBlock.length - 3);
+        
+        spans.add(WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Math.tex(
+            expr,
+            mathStyle: MathStyle.display,
+            textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          ),
+        ));
+      } else if (imgMarkdown != null) {
+        // ![alt](url) → Image.network
+        final md = RegExp(r'!\[([^\]]*?)\]\(([^)]+)\)').firstMatch(imgMarkdown);
+        //final alt = md?.group(1) ?? '';
+        final src = md?.group(2) ?? '';
+        spans.add(WidgetSpan(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Image.network(
+              src,
+              alignment: Alignment.center,
+              errorBuilder: (_, __, ___) => Text(
+                '[Image failed]',
+                style: TextStyle(color: Colors.red[400]),
+              ),
+            ),
+          ),
+        ));
+      }
+
+      lastEnd = match.end;
+    }
+
+    // trailing text
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastEnd)));
+    }
+
+    final defaultStyle =
+        DefaultTextStyle.of(context).style.copyWith(fontSize: 15, height: 1.4);
+
+    return RichText(
+      text: TextSpan(style: defaultStyle, children: spans),
+      textAlign: TextAlign.start,
+    );
+  }
+
+  Widget _buildExampleWidget(Map<String, String> example) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Input
+            const Text(
+              'Input:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.teal,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Text(
+                example['input'] ?? '',
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Output
+            const Text(
+              'Output:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.teal,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Text(
+                example['output'] ?? '',
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildErrorWidget() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(
-            Icons.signal_wifi_statusbar_connected_no_internet_4_outlined, 
-            size: 150
-          ),
+              Icons.signal_wifi_statusbar_connected_no_internet_4_outlined,
+              size: 150),
           const SizedBox(height: 18),
           const Text(
             'Something went wrong',
             style: TextStyle(
-              fontSize: 22, 
-              color: Colors.black, 
-              fontWeight: FontWeight.bold
-            ),
+                fontSize: 22, color: Colors.black, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 18),
           ElevatedButton(

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:acex/providers/user_provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'dart:io';
 
 class ClubDetailPage extends StatefulWidget {
@@ -352,8 +353,10 @@ class _ClubDetailPageState extends State<ClubDetailPage>
                           onSelected: (value) {
                             if (value == 'leave' && _club != null) {
                               _showLeaveClubDialog();
+                            }
+                            else if (value == 'delete' && _club != null) {
+                              _showDeleteClubDialog();
                             } else if (value == 'share') {
-                              // Share club
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Share feature coming soon'),

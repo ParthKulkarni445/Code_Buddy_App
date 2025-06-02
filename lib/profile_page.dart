@@ -19,8 +19,9 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String _getOnlineStatus(int? lastOnlineTimeSeconds) {
     if (lastOnlineTimeSeconds == null) return 'Unknown';
-    
-    final lastOnlineTime = DateTime.fromMillisecondsSinceEpoch(lastOnlineTimeSeconds * 1000);
+
+    final lastOnlineTime =
+        DateTime.fromMillisecondsSinceEpoch(lastOnlineTimeSeconds * 1000);
     final now = DateTime.now();
     final difference = now.difference(lastOnlineTime);
 
@@ -36,55 +37,55 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Map<String, Color> ratingColor = {
-  'newbie': Colors.grey,
-  'pupil': Colors.green,
-  'specialist': Colors.cyan,
-  'expert': const Color.fromARGB(255, 11, 35, 243), // Bright Blue
-  'candidate master': Colors.purple,
-  'master': Colors.orange,
-  'international master': Colors.orangeAccent,
-  'grandmaster': Colors.red,
-  'international grandmaster': Colors.redAccent,
-  'legendary grandmaster': const Color.fromARGB(255, 128, 0, 0), // Dark Red,
-  'tourist': const Color.fromARGB(255, 128, 0, 0)
-};
+    'newbie': Colors.grey,
+    'pupil': Colors.green,
+    'specialist': Colors.cyan,
+    'expert': const Color.fromARGB(255, 11, 35, 243), // Bright Blue
+    'candidate master': Colors.purple,
+    'master': Colors.orange,
+    'international master': Colors.orangeAccent,
+    'grandmaster': Colors.red,
+    'international grandmaster': Colors.redAccent,
+    'legendary grandmaster': const Color.fromARGB(255, 128, 0, 0), // Dark Red,
+    'tourist': const Color.fromARGB(255, 128, 0, 0)
+  };
 
-Map<String, Color> ratingRangeColor = {
-  '0-1199': Colors.grey, // Newbie
-  '1200-1399': Colors.green, // Pupil
-  '1400-1599': Colors.cyan, // Specialist
-  '1600-1899': const Color.fromARGB(255, 11, 35, 243), // Expert
-  '1900-2099': Colors.purple, // Candidate Master
-  '2100-2299': Colors.orange, // Master
-  '2300-2399': Colors.orangeAccent, // International Master
-  '2400-2599': Colors.red, // Grandmaster
-  '2600-2899': Colors.redAccent, // International Grandmaster
-  '2900-': const Color.fromARGB(255, 128, 0, 0), // Legendary Grandmaster
-};
+  Map<String, Color> ratingRangeColor = {
+    '0-1199': Colors.grey, // Newbie
+    '1200-1399': Colors.green, // Pupil
+    '1400-1599': Colors.cyan, // Specialist
+    '1600-1899': const Color.fromARGB(255, 11, 35, 243), // Expert
+    '1900-2099': Colors.purple, // Candidate Master
+    '2100-2299': Colors.orange, // Master
+    '2300-2399': Colors.orangeAccent, // International Master
+    '2400-2599': Colors.red, // Grandmaster
+    '2600-2899': Colors.redAccent, // International Grandmaster
+    '2900-': const Color.fromARGB(255, 128, 0, 0), // Legendary Grandmaster
+  };
 
-Color getColorForRating(int rating) {
-  if (rating <= 1199) {
-    return ratingRangeColor['0-1199']!;
-  } else if (rating <= 1399) {
-    return ratingRangeColor['1200-1399']!;
-  } else if (rating <= 1599) {
-    return ratingRangeColor['1400-1599']!;
-  } else if (rating <= 1899) {
-    return ratingRangeColor['1600-1899']!;
-  } else if (rating <= 2099) {
-    return ratingRangeColor['1900-2099']!;
-  } else if (rating <= 2299) {
-    return ratingRangeColor['2100-2299']!;
-  } else if (rating <= 2399) {
-    return ratingRangeColor['2300-2399']!;
-  } else if (rating <= 2599) {
-    return ratingRangeColor['2400-2599']!;
-  } else if (rating <= 2899) {
-    return ratingRangeColor['2600-2899']!;
-  } else {
-    return ratingRangeColor['2900-']!;
+  Color getColorForRating(int rating) {
+    if (rating <= 1199) {
+      return ratingRangeColor['0-1199']!;
+    } else if (rating <= 1399) {
+      return ratingRangeColor['1200-1399']!;
+    } else if (rating <= 1599) {
+      return ratingRangeColor['1400-1599']!;
+    } else if (rating <= 1899) {
+      return ratingRangeColor['1600-1899']!;
+    } else if (rating <= 2099) {
+      return ratingRangeColor['1900-2099']!;
+    } else if (rating <= 2299) {
+      return ratingRangeColor['2100-2299']!;
+    } else if (rating <= 2399) {
+      return ratingRangeColor['2300-2399']!;
+    } else if (rating <= 2599) {
+      return ratingRangeColor['2400-2599']!;
+    } else if (rating <= 2899) {
+      return ratingRangeColor['2600-2899']!;
+    } else {
+      return ratingRangeColor['2900-']!;
+    }
   }
-}
 
   late Future<Map<String, dynamic>> userInfo;
   late Future<List<dynamic>> ratingHistory;
@@ -151,7 +152,8 @@ Color getColorForRating(int rating) {
                   children: [
                     const Icon(Icons.settings, color: Colors.black),
                     const SizedBox(width: 8),
-                    const Text('Settings', style: TextStyle(color: Colors.black)),
+                    const Text('Settings',
+                        style: TextStyle(color: Colors.black)),
                   ],
                 ),
               ),
@@ -161,7 +163,8 @@ Color getColorForRating(int rating) {
                   children: [
                     const Icon(Icons.logout, color: Colors.black),
                     const SizedBox(width: 8),
-                    const Text('Sign Out', style: TextStyle(color: Colors.black)),
+                    const Text('Sign Out',
+                        style: TextStyle(color: Colors.black)),
                   ],
                 ),
               ),
@@ -170,52 +173,53 @@ Color getColorForRating(int rating) {
         ],
       ),
       body: FutureBuilder<List<dynamic>>(
-      future: Future.wait([userInfo, ratingHistory, submissions]),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const LoadingCard(primaryColor: Colors.red,
-          );
-        }
-        if (snapshot.hasError || !snapshot.hasData) {
-          return _buildErrorWidget();
-        }
-        final userData = snapshot.data![0] as Map<String, dynamic>;
-        final ratingHistoryData = snapshot.data![1] as List<dynamic>;
-        final submissionsData = snapshot.data![2] as List<dynamic>;
+        future: Future.wait([userInfo, ratingHistory, submissions]),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const LoadingCard(
+              primaryColor: Colors.red,
+            );
+          }
+          if (snapshot.hasError || !snapshot.hasData) {
+            return _buildErrorWidget();
+          }
+          final userData = snapshot.data![0] as Map<String, dynamic>;
+          final ratingHistoryData = snapshot.data![1] as List<dynamic>;
+          final submissionsData = snapshot.data![2] as List<dynamic>;
 
-        return RefreshIndicator(
-          onRefresh: _refreshData,
-          color: Colors.black,
-          backgroundColor: Colors.red,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildProfileHeader(userData),
-                const SizedBox(height: 18),
-                _buildStatisticsCard(userData),
-                const SizedBox(height: 18),
-                _buildRatingCard(userData, ratingHistoryData),
-                const SizedBox(height: 18),
-                MomentumCard(
-                  ratingHistory: ratingHistoryData,
-                  submissions: submissionsData,
-                ),
-                const SizedBox(height: 18),
-                _buildSubmissionCard(submissionsData),
-                const SizedBox(height: 18),
-                _buildContestHistoryCard(ratingHistoryData),
-                const SizedBox(height: 80),
-              ],
+          return RefreshIndicator(
+            onRefresh: _refreshData,
+            color: Colors.black,
+            backgroundColor: Colors.red,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildProfileHeader(userData),
+                  const SizedBox(height: 18),
+                  _buildStatisticsCard(userData),
+                  const SizedBox(height: 18),
+                  _buildRatingCard(userData, ratingHistoryData),
+                  const SizedBox(height: 18),
+                  MomentumCard(
+                    ratingHistory: ratingHistoryData,
+                    submissions: submissionsData,
+                  ),
+                  const SizedBox(height: 18),
+                  _buildSubmissionCard(submissionsData),
+                  const SizedBox(height: 18),
+                  _buildContestHistoryCard(ratingHistoryData),
+                  const SizedBox(height: 80),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    ),
-  );
-}
+          );
+        },
+      ),
+    );
+  }
 
   Widget _buildProfileHeader(Map<String, dynamic> data) {
     final onlineStatus = _getOnlineStatus(data['lastOnlineTimeSeconds']);
@@ -241,7 +245,10 @@ Color getColorForRating(int rating) {
             const SizedBox(height: 16),
             Text(
               data['rank'] ?? 'Unranked',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: ratingColor[data['rank']]),
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: ratingColor[data['rank']]),
             ),
             const SizedBox(height: 8),
             Text(
@@ -278,18 +285,24 @@ Color getColorForRating(int rating) {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildStatItem(FontAwesomeIcons.user, 'Name', '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'),
-            _buildStatItem(FontAwesomeIcons.envelope, 'Email', data['email'] ?? 'N/A'),
-            _buildStatItem(FontAwesomeIcons.locationDot, 'From', '${data['city'] ?? 'City X'}, ${data['country'] ?? 'Country Y'}'),
-            _buildStatItem(FontAwesomeIcons.handHoldingHeart, 'Contribution', data['contribution']?.toString() ?? 'N/A'),
-            _buildStatItem(FontAwesomeIcons.userFriends, 'Friend of', data['friendOfCount']?.toString() ?? 'N/A'),
+            _buildStatItem(FontAwesomeIcons.user, 'Name',
+                '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'),
+            _buildStatItem(
+                FontAwesomeIcons.envelope, 'Email', data['email'] ?? 'N/A'),
+            _buildStatItem(FontAwesomeIcons.locationDot, 'From',
+                '${data['city'] ?? 'City X'}, ${data['country'] ?? 'Country Y'}'),
+            _buildStatItem(FontAwesomeIcons.handHoldingHeart, 'Contribution',
+                data['contribution']?.toString() ?? 'N/A'),
+            _buildStatItem(FontAwesomeIcons.userFriends, 'Friend of',
+                data['friendOfCount']?.toString() ?? 'N/A'),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRatingCard(Map<String, dynamic> userData, List<dynamic> ratingHistoryList) {
+  Widget _buildRatingCard(
+      Map<String, dynamic> userData, List<dynamic> ratingHistoryList) {
     final currentRating = userData['rating'] ?? 0;
     final maxRating = userData['maxRating'] ?? 0;
     final maxRank = userData['maxRank'] ?? 'Unknown';
@@ -308,9 +321,12 @@ Color getColorForRating(int rating) {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildRatingInfo(FontAwesomeIcons.chartLine, 'Current Rating', currentRating.toString(), ratingColor[userData['rank']]!),
-            _buildRatingInfo(FontAwesomeIcons.trophy, 'Max Rating', maxRating.toString(), ratingColor[maxRank]!),
-            _buildRatingInfo(FontAwesomeIcons.crown, 'Max Rank', maxRank, ratingColor[maxRank]!),
+            _buildRatingInfo(FontAwesomeIcons.chartLine, 'Current Rating',
+                currentRating.toString(), ratingColor[userData['rank']]!),
+            _buildRatingInfo(FontAwesomeIcons.trophy, 'Max Rating',
+                maxRating.toString(), ratingColor[maxRank]!),
+            _buildRatingInfo(FontAwesomeIcons.crown, 'Max Rank', maxRank,
+                ratingColor[maxRank]!),
             const SizedBox(height: 8),
             const Center(
               child: Text(
@@ -328,8 +344,14 @@ Color getColorForRating(int rating) {
             const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Least Recent', style: TextStyle(fontSize: 10),),
-                Text('Most Recent', style: TextStyle(fontSize: 10),),
+                Text(
+                  'Least Recent',
+                  style: TextStyle(fontSize: 10),
+                ),
+                Text(
+                  'Most Recent',
+                  style: TextStyle(fontSize: 10),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -345,30 +367,32 @@ Color getColorForRating(int rating) {
     );
   }
 
-  Widget _buildRatingInfo(IconData icon, String label, String value, Color color) {
-    return LayoutBuilder(
-      builder: (context,constraints) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              FaIcon(icon, size: constraints.maxWidth*0.07, color: Colors.grey[600]),
-              SizedBox(
-                width: constraints.maxWidth * 0.88,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(label, style: TextStyle(color: Colors.grey[600])),
-                    Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
-                  ],
-                ),
+  Widget _buildRatingInfo(
+      IconData icon, String label, String value, Color color) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            FaIcon(icon,
+                size: constraints.maxWidth * 0.07, color: Colors.grey[600]),
+            SizedBox(
+              width: constraints.maxWidth * 0.88,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(label, style: TextStyle(color: Colors.grey[600])),
+                  Text(value,
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, color: color)),
+                ],
               ),
-            ],
-          ),
-        );
-      }
-    );
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildRatingHistoryGraph(List<dynamic> ratingHistory) {
@@ -377,14 +401,17 @@ Color getColorForRating(int rating) {
     }
 
     // Take only the most recent 30 points
-    final recentHistory = ratingHistory.reversed.take(20).toList().reversed.toList();
+    final recentHistory =
+        ratingHistory.reversed.take(20).toList().reversed.toList();
 
     final List<FlSpot> spots = recentHistory.asMap().entries.map((entry) {
       return FlSpot(entry.key.toDouble(), entry.value['newRating'].toDouble());
     }).toList();
 
-    final minRating = spots.map((spot) => spot.y).reduce((a, b) => a < b ? a : b);
-    final maxRating = spots.map((spot) => spot.y).reduce((a, b) => a > b ? a : b);
+    final minRating =
+        spots.map((spot) => spot.y).reduce((a, b) => a < b ? a : b);
+    final maxRating =
+        spots.map((spot) => spot.y).reduce((a, b) => a > b ? a : b);
 
     //final List<double> horizontalLines = [1200, 1400, 1600, 1800, 2000];
 
@@ -402,8 +429,8 @@ Color getColorForRating(int rating) {
           horizontalInterval: 50,
         ),
         titlesData: FlTitlesData(
-          bottomTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false)),
+          bottomTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               maxIncluded: false,
@@ -419,14 +446,16 @@ Color getColorForRating(int rating) {
               },
             ),
           ),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         borderData: FlBorderData(show: true),
         minX: 0,
         maxX: (recentHistory.length - 1).toDouble(),
-        minY: minRating-100,
-        maxY: maxRating+100,
+        minY: minRating - 100,
+        maxY: maxRating + 100,
         lineBarsData: [
           LineChartBarData(
             spots: spots,
@@ -457,7 +486,8 @@ Color getColorForRating(int rating) {
               return touchedSpots.map((LineBarSpot touchedSpot) {
                 final index = touchedSpot.x.toInt();
                 final contest = recentHistory[index];
-                final date = DateTime.fromMillisecondsSinceEpoch(contest['ratingUpdateTimeSeconds'] * 1000);
+                final date = DateTime.fromMillisecondsSinceEpoch(
+                    contest['ratingUpdateTimeSeconds'] * 1000);
                 final formattedDate = DateFormat('MMM dd, yyyy').format(date);
                 final newRating = contest['newRating'];
                 final oldRating = contest['oldRating'];
@@ -502,15 +532,32 @@ Color getColorForRating(int rating) {
               itemBuilder: (context, index) {
                 final contest = contests[contests.length - 1 - index];
                 return ListTile(
-                  leading: FaIcon(FontAwesomeIcons.solidFlag, size: 10, color: (contest['newRating'] >= contest['oldRating']) ? Colors.green : Colors.red),
+                  leading: FaIcon(FontAwesomeIcons.solidFlag,
+                      size: 10,
+                      color: (contest['newRating'] >= contest['oldRating'])
+                          ? Colors.green
+                          : Colors.red),
                   minLeadingWidth: 12,
                   minVerticalPadding: 10,
                   title: Text(contest['contestName'] ?? 'Unknown Contest'),
-                  subtitle: Text('Rank: ${contest['rank']}', style: TextStyle(color: (contest['newRating'] >= contest['oldRating']) ? Colors.green : Colors.red)),
+                  subtitle: Text('Rank: ${contest['rank']}',
+                      style: TextStyle(
+                          color: (contest['newRating'] >= contest['oldRating'])
+                              ? Colors.green
+                              : Colors.red)),
                   trailing: Column(
                     children: [
-                      Text('${contest['newRating']}', style: TextStyle(fontSize: 14, color: getColorForRating(contest['newRating']), fontWeight: FontWeight.bold)),
-                      Text('(${contest['newRating'] - contest['oldRating'] >= 0 ? '+' : '-'}${(contest['newRating'] - contest['oldRating']).abs()})', style: const TextStyle(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold)),
+                      Text('${contest['newRating']}',
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: getColorForRating(contest['newRating']),
+                              fontWeight: FontWeight.bold)),
+                      Text(
+                          '(${contest['newRating'] - contest['oldRating'] >= 0 ? '+' : '-'}${(contest['newRating'] - contest['oldRating']).abs()})',
+                          style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold)),
                     ],
                   ),
                 );
@@ -522,17 +569,21 @@ Color getColorForRating(int rating) {
     );
   }
 
-   Widget _buildSubmissionCard(List<dynamic> submissionList) {
+  Widget _buildSubmissionCard(List<dynamic> submissionList) {
     Map<DateTime, int> submissionsMap = {};
     Set<String> uniqSubs = {}, uniqSubsLastMonth = {};
     for (var submission in submissionList) {
-      DateTime date = DateTime.fromMillisecondsSinceEpoch(submission['creationTimeSeconds'] * 1000);
+      DateTime date = DateTime.fromMillisecondsSinceEpoch(
+          submission['creationTimeSeconds'] * 1000);
       DateTime dateOnly = DateTime(date.year, date.month, date.day);
       submissionsMap[dateOnly] = (submissionsMap[dateOnly] ?? 0) + 1;
       if (submission['verdict'] == 'OK') {
-        uniqSubs.add('${submission['problem']['contestId']}${submission['problem']['index']}');
-        if (date.month == DateTime.now().month && date.year == DateTime.now().year) {
-          uniqSubsLastMonth.add('${submission['problem']['contestId']}${submission['problem']['index']}');
+        uniqSubs.add(
+            '${submission['problem']['contestId']}${submission['problem']['index']}');
+        if (date.month == DateTime.now().month &&
+            date.year == DateTime.now().year) {
+          uniqSubsLastMonth.add(
+              '${submission['problem']['contestId']}${submission['problem']['index']}');
         }
       }
     }
@@ -544,7 +595,8 @@ Color getColorForRating(int rating) {
     submissionsMap.keys.toList()
       ..sort()
       ..forEach((date) {
-        if (lastSubmission == null || date.difference(lastSubmission!).inDays == 1) {
+        if (lastSubmission == null ||
+            date.difference(lastSubmission!).inDays == 1) {
           currentStreak++;
           maxStreak = currentStreak > maxStreak ? currentStreak : maxStreak;
         } else {
@@ -582,14 +634,34 @@ Color getColorForRating(int rating) {
                 6: Colors.red[600]!,
                 8: Colors.red[900]!,
               },
+              onClick: (date) {
+                final count = submissionsMap[date] ?? 0;
+                final formatted = DateFormat('dd MMM yyyy').format(date);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        '$formatted : $count submission${count == 1 ? '' : 's'}'),
+                    duration: const Duration(seconds: 1),
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.only(top: 16, left: 16, right:16, bottom:110),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 8),
-            const Center(child: Text('<- Swipe to view more ->', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
+            const Center(
+                child: Text('<- Swipe to view more ->',
+                    style:
+                        TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
             const SizedBox(height: 16),
-            _buildStatItem(FontAwesomeIcons.listCheck, 'Problems Solved', '$problemsSolved'),
-            _buildStatItem(FontAwesomeIcons.calendarDays, 'Problems Solved This Month', '$problemsSolvedThisMonth'),
-            _buildStatItem(FontAwesomeIcons.bolt, 'Current Streak', '$currentStreak days'),
-            _buildStatItem(FontAwesomeIcons.fire, 'Max Streak', '$maxStreak days'),
+            _buildStatItem(FontAwesomeIcons.listCheck, 'Problems Solved',
+                '$problemsSolved'),
+            _buildStatItem(FontAwesomeIcons.calendarDays,
+                'Problems Solved This Month', '$problemsSolvedThisMonth'),
+            _buildStatItem(
+                FontAwesomeIcons.bolt, 'Current Streak', '$currentStreak days'),
+            _buildStatItem(
+                FontAwesomeIcons.fire, 'Max Streak', '$maxStreak days'),
           ],
         ),
       ),
@@ -597,31 +669,32 @@ Color getColorForRating(int rating) {
   }
 
   Widget _buildStatItem(IconData icon, String label, String value) {
-    return LayoutBuilder(
-      builder: (context,constraints) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              FaIcon(icon, size: constraints.maxWidth*0.07, color: Colors.grey[600]),
-              SizedBox(
-                width: constraints.maxWidth * 0.88,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(label, style: TextStyle(color: Colors.grey[600])),
-                    Text(value.length > 19 ? '${value.substring(0, 19)}...' : value,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      maxLines: 1,),
-                  ],
-                ),
+    return LayoutBuilder(builder: (context, constraints) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            FaIcon(icon,
+                size: constraints.maxWidth * 0.07, color: Colors.grey[600]),
+            SizedBox(
+              width: constraints.maxWidth * 0.88,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(label, style: TextStyle(color: Colors.grey[600])),
+                  Text(
+                    value.length > 19 ? '${value.substring(0, 19)}...' : value,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                  ),
+                ],
               ),
-            ],
-          ),
-        );
-      }
-    );
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildErrorWidget() {
@@ -629,25 +702,30 @@ Color getColorForRating(int rating) {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.signal_wifi_statusbar_connected_no_internet_4_outlined, size: 150,),
+          const Icon(
+            Icons.signal_wifi_statusbar_connected_no_internet_4_outlined,
+            size: 150,
+          ),
           const SizedBox(height: 18),
           const Text(
             'Something went wrong',
-            style: TextStyle(fontSize: 22, color: Colors.black, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                fontSize: 22, color: Colors.black, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 18),
           ElevatedButton(
             onPressed: _retryFetchData,
             style: ElevatedButton.styleFrom(
               elevation: 6,
-              backgroundColor:  Colors.red,
+              backgroundColor: Colors.red,
             ),
-            child: const Text('Retry', style: TextStyle(color: Colors.black),),
+            child: const Text(
+              'Retry',
+              style: TextStyle(color: Colors.black),
+            ),
           ),
         ],
       ),
     );
   }
-  
 }
-

@@ -137,20 +137,7 @@ Future<void> _searchClubs(String query) async {
       });
       return;
     }
-    
-    // Debug print to check the query
-    print('Searching clubs with query: $query');
-    
     final results = await _clubService.searchClubs(context, query);
-    
-    // Debug print to check results
-    print('Search results count: ${results.length}');
-    if (results.isEmpty) {
-      print('No results found for query: $query');
-    } else {
-      print('Found clubs: ${results.map((c) => c.name).join(', ')}');
-    }
-    
     setState(() {
       _searchResults = results;
     });

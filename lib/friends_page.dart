@@ -89,13 +89,16 @@ class _FriendsPageState extends State<FriendsPage> {
   }
 
   Widget _buildNoCredentialsMessage() {
-    return Center(
-      child: Card(
-        color: Colors.white,
-        elevation: 10,
-        margin: const EdgeInsets.all(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+    return Card(
+      color: Colors.white,
+      elevation: 10,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(25),
+      ),
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Container(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -334,9 +337,7 @@ class _FriendsPageState extends State<FriendsPage> {
         future: Future.wait([onlineFriends, friends]),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: LoadingCard(primaryColor: Colors.blue),
-            );
+            return LoadingCard(primaryColor: Colors.blue);
           }
           if (snapshot.hasError || snapshot.data == null) {
             return _buildErrorWidget();

@@ -9,7 +9,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class ContestsPage extends StatefulWidget {
-  const ContestsPage({super.key});
+  final String handle;
+  const ContestsPage({super.key, required this.handle});
 
   @override
   State<ContestsPage> createState() => _ContestsPageState();
@@ -18,11 +19,13 @@ class ContestsPage extends StatefulWidget {
 class _ContestsPageState extends State<ContestsPage> {
   late Future<List<dynamic>> contests;
   final Map<String, List<dynamic>> _groupedContests = {};
+  late Future<List<dynamic>> givenContests;
   final Map<String, int> _currentPage = {};
   final int _pageSize = 50;
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
   Map<DateTime, List<dynamic>> _contestEvents = {};
+  Set<String> contestIDs = {};
   CalendarFormat _calendarFormat = CalendarFormat.month;
   final _calendarKey = GlobalKey();
 
@@ -34,9 +37,19 @@ class _ContestsPageState extends State<ContestsPage> {
 
   void _fetchData() {
     contests = ApiService().getContests();
+    givenContests = ApiService().getRatingHistory(widget.handle);
     contests.then((contestsList) {
       _processContestEvents(contestsList);
     });
+    givenContests.then((contestsList) {
+      _processContestIDs(contestsList);
+    });
+  }
+
+  void _processContestIDs(List<dynamic> contestsList) {
+    for (final contest in contestsList) {
+      contestIDs.add(contest['contestId'].toString());
+    }
   }
 
   void _processContestEvents(List<dynamic> contestsList) {
@@ -424,7 +437,7 @@ class _ContestsPageState extends State<ContestsPage> {
                 separatorBuilder: (context, index) => const Divider(color: Colors.grey, thickness: 2,),
               ),
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -469,12 +482,13 @@ class _ContestsPageState extends State<ContestsPage> {
     
     final dateFormat = DateFormat('MMM/dd/yyyy');
     final timeFormat = DateFormat('HH:mm');
-    
+    final isPartipated = contestIDs.contains(contest['id'].toString());
     final formattedDate = dateFormat.format(startTime);
     final formattedTime = timeFormat.format(startTime);
     final formattedDuration = '${duration.inHours}:${(duration.inMinutes % 60).toString().padLeft(2, '0')}';
     
     return ListTile(
+      tileColor: isPartipated ? Colors.yellow[100] : Colors.white,
       title: Text(contest['name'], style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
       subtitle: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
