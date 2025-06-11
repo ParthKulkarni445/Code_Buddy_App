@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:91760374638:android:c8dc4490f6de201c05877f",
+        "mobilesdk_app_id": "1:91760374638:android:16ac043889d22cb805877f",
         "android_client_info": {
-          "package_name": "com.example.acex"
+          "package_name": "com.iitropar.codebuddy"
         }
       },
       "oauth_client": [],
