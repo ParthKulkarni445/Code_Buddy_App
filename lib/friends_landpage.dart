@@ -17,7 +17,6 @@ class _FriendLandingPageState extends State<FriendLandingPage> {
 
   final List<Color?> colors = [
     Colors.red,
-    Colors.green,
     Colors.purple
   ];
 
@@ -34,7 +33,6 @@ class _FriendLandingPageState extends State<FriendLandingPage> {
     super.initState();
     pages = [
       ProfilePage(handle: widget.handle),
-      SubmissionsPage(handle: widget.handle),
       StatsPage(handle: widget.handle)
     ];
   }
@@ -81,8 +79,7 @@ class _FriendLandingPageState extends State<FriendLandingPage> {
                     unselectedItemColor: Colors.grey[600],
                     items: [
                       _buildNavBarItem(FontAwesomeIcons.solidUser, 0),
-                      _buildNavBarItem(FontAwesomeIcons.clipboardList, 1),
-                      _buildNavBarItem(FontAwesomeIcons.magnifyingGlassChart, 2),
+                      _buildNavBarItem(FontAwesomeIcons.magnifyingGlassChart, 1),
                     ],
                   ),
                 ),

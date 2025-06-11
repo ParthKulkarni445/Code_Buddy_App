@@ -788,8 +788,8 @@ class ApiService {
 
   Future<Map<String, dynamic>> getFriendStandings(
       String handle, int contestId) async {
-    String? apiKey = await SecureStorageService.readData('api_key');
-    String? apiSecret = await SecureStorageService.readData('api_secret');
+    String? apiKey = await SecureStorageService.readData('api_key_${handle}');
+    String? apiSecret = await SecureStorageService.readData('api_secret_${handle}');
 
     const methodName = 'contest.standings';
     final time = (DateTime.now().millisecondsSinceEpoch / 1000).round();
@@ -814,8 +814,8 @@ class ApiService {
   }
 
   Future<List<dynamic>> fetchFriends(String handle, bool isOnline) async {
-    String? apiKey = await SecureStorageService.readData('api_key');
-    String? apiSecret = await SecureStorageService.readData('api_secret');
+    String? apiKey = await SecureStorageService.readData('api_key_${handle}');
+    String? apiSecret = await SecureStorageService.readData('api_secret_${handle}');
     const methodName = 'user.friends';
     final time = (DateTime.now().millisecondsSinceEpoch / 1000).round();
 

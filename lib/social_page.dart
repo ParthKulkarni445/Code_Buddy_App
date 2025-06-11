@@ -83,8 +83,8 @@ class _SocialPageState extends State<SocialPage>
   }
 
   Future<void> _checkCredentials() async {
-    final apiKey = await storage.read(key: 'api_key');
-    final apiSecret = await storage.read(key: 'api_secret');
+    final apiKey = await storage.read(key: 'api_key_${_handle}');
+    final apiSecret = await storage.read(key: 'api_secret_${_handle}');
 
     if (apiKey != null && apiSecret != null) {
       final user = Provider.of<UserProvider>(context, listen: false).user;

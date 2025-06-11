@@ -308,14 +308,6 @@ class _ProblemPageState extends State<ProblemPage> {
               ),
             );
           }),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Show problem details modal with LaTeX support
-          _showProblemDetailsModal(context);
-        },
-        backgroundColor: Colors.teal,
-        child: const Icon(Icons.preview, color: Colors.white),
-      ),
     );
   }
 
@@ -433,6 +425,7 @@ class _ProblemPageState extends State<ProblemPage> {
                 });
               },
               // Teal‐themed dialog
+              backgroundColor: Colors.white,
               selectedColor: Colors.teal,
               unselectedColor: Colors.teal.shade50,
               checkColor: Colors.white,
@@ -464,6 +457,7 @@ class _ProblemPageState extends State<ProblemPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
+                const Spacer(),
                 ChoiceChip(
                   label: const Text('Tags'),
                   selected: _showTagsForUnsolved,
@@ -500,13 +494,19 @@ class _ProblemPageState extends State<ProblemPage> {
                   },
                 ),
                 const Spacer(),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
                 OutlinedButton.icon(
-                  onPressed: _resetFilters,
-                  icon: const Icon(Icons.refresh, size: 18, color: Colors.teal),
-                  label: const Text('Reset All'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.teal,
-                    side: const BorderSide(color: Colors.teal, width: 2),
+                      onPressed: _resetFilters,
+                      icon: const Icon(Icons.refresh, size: 18, color: Colors.teal),
+                      label: const Text('Reset All'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.teal,
+                        side: const BorderSide(color: Colors.teal, width: 2),
                   ),
                 ),
               ],

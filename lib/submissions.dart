@@ -39,8 +39,9 @@ class _SubmissionsPageState extends State<SubmissionsPage> {
   }
 
   Future<void> _checkCredentials() async {
-    final apiKey = await storage.read(key: 'api_key');
-    final apiSecret = await storage.read(key: 'api_secret');
+    String handle = Provider.of<UserProvider>(context, listen: false).user.handle;
+    final apiKey = await storage.read(key: 'api_key_${handle}');
+    final apiSecret = await storage.read(key: 'api_secret_${handle}');
     
     if ( apiKey != null && apiSecret != null) {
       _fetchData();
@@ -197,7 +198,7 @@ class _SubmissionsPageState extends State<SubmissionsPage> {
       );
     }
 
-    if(!hasCredentials && _selectedHandle != widget.handle) {
+    if(!hasCredentials && _selectedHandle != Provider.of<UserProvider>(context, listen: false).user.handle) {
       return Scaffold(
         backgroundColor: Colors.grey[200],
         appBar: AppBar(
@@ -690,7 +691,7 @@ class _SubmissionsPageState extends State<SubmissionsPage> {
                           ),
                         ),
                       ),
-                      if (rating != null)
+                      if (rating != null && isAccepted)
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -736,8 +737,9 @@ class _SubmissionsPageState extends State<SubmissionsPage> {
                             ? Colors.orange
                             : Colors.red[700]!),
                   ),
-                  const SizedBox(height: 8),
-                  _buildInfoRow(
+                  
+                  if(isAccepted)const SizedBox(height: 8),
+                  if(isAccepted)_buildInfoRow(
                     Icons.label_outline,
                     'Tags:',
                     tags.join(', '),

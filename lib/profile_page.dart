@@ -90,6 +90,7 @@ class _ProfilePageState extends State<ProfilePage> {
   late Future<Map<String, dynamic>> userInfo;
   late Future<List<dynamic>> ratingHistory;
   late Future<List<dynamic>> submissions;
+  late Future<Map<String,dynamic>> problemset;
 
   @override
   void initState() {
@@ -101,6 +102,7 @@ class _ProfilePageState extends State<ProfilePage> {
     userInfo = ApiService().getUserInfo(widget.handle);
     ratingHistory = ApiService().getRatingHistory(widget.handle);
     submissions = ApiService().getSubmissions(widget.handle);
+    problemset = ApiService().getProblemset();
   }
 
   void _retryFetchData() {
@@ -173,7 +175,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
       body: FutureBuilder<List<dynamic>>(
-        future: Future.wait([userInfo, ratingHistory, submissions]),
+        future: Future.wait([userInfo, ratingHistory, submissions, problemset]),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingCard(
@@ -186,6 +188,7 @@ class _ProfilePageState extends State<ProfilePage> {
           final userData = snapshot.data![0] as Map<String, dynamic>;
           final ratingHistoryData = snapshot.data![1] as List<dynamic>;
           final submissionsData = snapshot.data![2] as List<dynamic>;
+          final problemset = snapshot.data![3] as Map<String, dynamic>;
 
           return RefreshIndicator(
             onRefresh: _refreshData,
@@ -206,6 +209,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   MomentumCard(
                     ratingHistory: ratingHistoryData,
                     submissions: submissionsData,
+                    problemset: problemset,
+                    Rating: userData['rating'] ?? 0,
                   ),
                   const SizedBox(height: 18),
                   _buildSubmissionCard(submissionsData),
@@ -650,9 +655,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 8),
             const Center(
-                child: Text('<- Swipe to view more ->',
-                    style:
-                        TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
+                child: Text('Swipe to view more, click on tile for details',style:TextStyle(fontSize: 15, fontWeight: FontWeight.w500))),
             const SizedBox(height: 16),
             _buildStatItem(FontAwesomeIcons.listCheck, 'Problems Solved',
                 '$problemsSolved'),

@@ -43,12 +43,12 @@ class _FriendsPageState extends State<FriendsPage> {
   }
 
   Future<void> _checkCredentials() async {
-    final apiKey = await storage.read(key: 'api_key');
-    final apiSecret = await storage.read(key: 'api_secret');
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    _handle = user.handle;
+    final apiKey = await storage.read(key: 'api_key_${_handle}');
+    final apiSecret = await storage.read(key: 'api_secret_${_handle}');
     
     if (apiKey != null && apiSecret != null) {
-      final user = Provider.of<UserProvider>(context, listen: false).user;
-      _handle = user.handle;
       _fetchData();
       setState(() {
         hasCredentials = true;
@@ -564,7 +564,9 @@ class _FriendsPageState extends State<FriendsPage> {
         borderRadius: BorderRadius.circular(12),
         onTap: () {
           FocusManager.instance.primaryFocus?.unfocus();
-          
+          if(handle==Provider.of<UserProvider>(context, listen: false).user.handle) {
+            return;
+          }
           Future.delayed(const Duration(milliseconds: 100), () {
             Navigator.push(
               context,

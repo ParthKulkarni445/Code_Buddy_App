@@ -1,7 +1,9 @@
+import 'package:acex/providers/user_provider.dart';
 import 'package:acex/services.dart';
 import 'package:acex/utils/secure_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -27,8 +29,9 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadCredentials() async {
-    String? apiKey = await SecureStorageService.readData('api_key');
-    String? apiSecret = await SecureStorageService.readData('api_secret');
+    String handle = Provider.of<UserProvider>(context, listen: false).user.handle;
+    String? apiKey = await SecureStorageService.readData('api_key_${handle}');
+    String? apiSecret = await SecureStorageService.readData('api_secret_${handle}');
     
     if (apiKey != null && apiSecret != null) {
       _apiKeyController.text = apiKey;
@@ -46,6 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _saveCredentials() async {
+    String handle = Provider.of<UserProvider>(context, listen: false).user.handle;
     setState(() {
       _apiKeyError = _apiKeyController.text.isEmpty ? 'API Key is required' : null;
       _apiSecretError = _apiSecretController.text.isEmpty ? 'API Secret is required' : null;
@@ -58,8 +62,8 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _isLoading = true);
 
     try {
-      await SecureStorageService.saveData('api_key', _apiKeyController.text);
-      await SecureStorageService.saveData('api_secret', _apiSecretController.text);
+      await SecureStorageService.saveData('api_key_${handle}', _apiKeyController.text);
+      await SecureStorageService.saveData('api_secret_${handle}', _apiSecretController.text);
     
       setState(() => _hasCredentials = true);
     } catch (e) {
@@ -72,11 +76,12 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _clearCredentials() async {
+    String handle = Provider.of<UserProvider>(context, listen: false).user.handle;
     setState(() => _isLoading = true);
     
     try {
-      await SecureStorageService.deleteData('api_key');
-      await SecureStorageService.deleteData('api_secret');
+      await SecureStorageService.deleteData('api_key_${handle}');
+      await SecureStorageService.deleteData('api_secret_${handle}');
       _apiKeyController.clear();
       _apiSecretController.clear();
       setState(() => _hasCredentials = false);

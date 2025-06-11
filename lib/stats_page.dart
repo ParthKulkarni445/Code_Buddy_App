@@ -160,15 +160,7 @@ class _StatsPageState extends State<StatsPage> {
   int _currentPage = 0;
   final PageController _pageController = PageController(initialPage: 0);
   late Map<String, Map<int, int>> rankCounts;
-  final List<String> _divisions = [
-    'Div. 1',
-    'Div. 2',
-    'Div. 3',
-    'Div. 4',
-    'Global',
-    'Div. 1 + Div. 2'
-  ];
-  String _selectedDivision = 'Div. 1';
+  String _selectedRange = 'Overall';
 
   final Map<String, Map<String, dynamic>> rankInfo = {
     'newbie': {
@@ -253,11 +245,12 @@ class _StatsPageState extends State<StatsPage> {
   Map<String, Map<int, int>> processSubmissions(
       List<dynamic> subs, Map<String, dynamic> probs) {
     Map<String, Map<String, dynamic>> acceptedProblems = {};
-
+    // int cnt=0;
     for (var submission in subs) {
       if (submission['verdict'] == 'OK') {
         String problemId =
             '${submission['problem']['contestId']}-${submission['problem']['index']}';
+        // print('${++cnt} Processing submission for problem: $problemId');
         if (!acceptedProblems.containsKey(problemId)) {
           acceptedProblems[problemId] = submission['problem'];
         }
@@ -265,13 +258,14 @@ class _StatsPageState extends State<StatsPage> {
     }
 
     Map<String, Map<int, int>> nonEmptyRankCounts = {};
-
+    // print('Processing ${acceptedProblems.length} accepted problems');
     for (var problem in acceptedProblems.values) {
       if (problem['rating'] != null) {
         int rating = problem['rating'];
+        // print('$rating, ${++ct}');
         int ratingKey = (rating ~/ 100) * 100;
         if (ratingKey < 800) ratingKey = 800;
-
+        // print('Rating key: $ratingKey');
         for (var rank in rankInfo.keys) {
           final range = rankInfo[rank]!['range'] as List<int>;
           if (ratingKey >= range[0] && ratingKey <= range[1]) {
@@ -290,41 +284,6 @@ class _StatsPageState extends State<StatsPage> {
     }
 
     return nonEmptyRankCounts;
-  }
-
-  List<dynamic> _filterContestsByDivision(List<dynamic> contests) {
-    if (_selectedDivision == 'Div. 1')
-      return contests
-          .where((contest) =>
-              contest['name'].toString().toLowerCase().contains('div. 1'))
-          .toList();
-    if (_selectedDivision == 'Div. 2')
-      return contests
-          .where((contest) =>
-              contest['name'].toString().toLowerCase().contains('div. 2'))
-          .toList();
-    if (_selectedDivision == 'Div. 3')
-      return contests
-          .where((contest) =>
-              contest['name'].toString().toLowerCase().contains('div. 3'))
-          .toList();
-    if (_selectedDivision == 'Div. 4')
-      return contests
-          .where((contest) =>
-              contest['name'].toString().toLowerCase().contains('div. 4'))
-          .toList();
-    if (_selectedDivision == 'Global')
-      return contests
-          .where((contest) =>
-              !contest['name'].toString().toLowerCase().contains('div'))
-          .toList();
-    if (_selectedDivision == 'Div. 1 + Div. 2')
-      return contests
-          .where((contest) =>
-              contest['name'].toString().toLowerCase().contains('div. 1') ||
-              contest['name'].toString().toLowerCase().contains('div. 2'))
-          .toList();
-    return contests;
   }
 
   Map<String, dynamic> getTopicStats(List<dynamic> submissions) {
@@ -1013,10 +972,21 @@ class _StatsPageState extends State<StatsPage> {
         'Others': 0
       };
       Map<String, Set<String>> problemAttempts = {};
-      int total = submissions.length;
+      int total = 0;
+      final interval = _selectedRange == 'Last Week'
+          ? DateTime.now().subtract(Duration(days: 7))
+          : _selectedRange == 'Last Month'
+              ? DateTime.now().subtract(Duration(days: 30))
+              : DateTime.fromMillisecondsSinceEpoch(0);
+
 
       for (var submission in submissions) {
         if (submission['verdict'] == null) continue;
+        final submissionTime = DateTime.fromMillisecondsSinceEpoch(
+            submission['creationTimeSeconds'] * 1000);
+        if (submissionTime.isBefore(interval)) continue;
+
+        total++;
         String verdict = submission['verdict'];
         if (verdict == 'OK') {
           verdictCounts['Accepted'] = verdictCounts['Accepted']! + 1;
@@ -1036,6 +1006,13 @@ class _StatsPageState extends State<StatsPage> {
         problemAttempts[problemId]!.add(verdict);
       }
 
+      int uniqueProblems=0;
+      for (var pids in problemAttempts.keys) {
+        if (problemAttempts[pids]!.contains('OK')) {
+          uniqueProblems++;
+        }
+      }
+
       int problemsWithMultipleAttempts = problemAttempts.values
           .where((attempts) => attempts.length > 1 && attempts.contains('OK'))
           .length;
@@ -1044,7 +1021,7 @@ class _StatsPageState extends State<StatsPage> {
         'verdicts': verdictCounts,
         'total': total,
         'multipleAttempts': problemsWithMultipleAttempts,
-        'uniqueProblems': problemAttempts.length,
+        'uniqueProblems': uniqueProblems,
       };
     }
 
@@ -1055,9 +1032,10 @@ class _StatsPageState extends State<StatsPage> {
       'Time Limit': Colors.orange,
       'Others': Colors.grey,
     };
+    print(stats);
 
     final Map<String, int> verdicts = stats['verdicts'];
-    final acceptanceRate = (verdicts['Accepted'] ?? 0) / stats['total'] * 100;
+    final acceptanceRate = (stats['total']>0)?(verdicts['Accepted'] ?? 0) / stats['total'] * 100 : 0;
     final avgAttempts = stats['multipleAttempts'] > 0
         ? (stats['total'] - (verdicts['Accepted'] ?? 0)) /
             stats['multipleAttempts']
@@ -1078,11 +1056,33 @@ class _StatsPageState extends State<StatsPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const Text('Filter:'),
+                const SizedBox(width: 8),
+                DropdownButton<String>(
+                  value: _selectedRange,
+                  dropdownColor: Colors.white,
+                  items: const [
+                    DropdownMenuItem(value: 'Last Week', child: Text('Last Week')),
+                    DropdownMenuItem(value: 'Last Month', child: Text('Last Month')),
+                    DropdownMenuItem(value: 'Overall', child: Text('Overall')),
+                  ],
+                  onChanged: (newValue) {
+                    setState(() {
+                      _selectedRange = newValue ?? 'Overall';
+                    });
+                  },
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
             Center(
               child: SizedBox(
                 height: 250,
-                child: PieChart(
+                child: (stats['total']>0)?PieChart(
                   PieChartData(
                     sectionsSpace: 2,
                     centerSpaceRadius: 40,
@@ -1114,6 +1114,11 @@ class _StatsPageState extends State<StatsPage> {
                     }).toList(),
                   ),
                   duration: const Duration(milliseconds: 500),
+                ): const Center(
+                  child: Text(
+                    'No submissions available',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
                 ),
               ),
             ),

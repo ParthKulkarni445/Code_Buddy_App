@@ -110,7 +110,7 @@ class _AuthPageState extends State<AuthPage>
     print("Login");
     _authService.signInUser(
       context: context,
-      handle: _handleController.text,
+      handle: _handleController.text.trim(),
       onSuccess: () {
         setState(() {
           _isLoading = false;
@@ -186,8 +186,8 @@ class _AuthPageState extends State<AuthPage>
     
     _authService.signUpUser(
       context: context,
-      email: _emailController.text,
-      handle: _handleController.text,
+      email: _emailController.text.trim(),
+      handle: _handleController.text.trim(),
       onSuccess: () {
         setState(() {
           _isLoading = false;
